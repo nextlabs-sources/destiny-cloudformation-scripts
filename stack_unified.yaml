@@ -1,0 +1,312 @@
+Description: Platform Unified Stack Template With Consolidated RDS
+Parameters:
+  RDSInstanceEndpointAddress:
+    Description: RDS End Point Address - THis will store all DBs of cloudaz Stack
+    Type: String
+    Default: rds-saas-trial.clnsjvjxkzmx.us-east-1.rds.amazonaws.com
+  DBMasterName:
+    Description: Database- RDS user authenticate against
+    Type: String
+    Default: postgres
+  DBMasterUsername:
+    Description: Database- RDS Master User Name
+    Type: String
+    Default: postgres
+  DBMasterUserPassword:
+    Description: Database- RDS Master User Password
+    Type: String
+    NoEcho: true
+    Default: ItisBlue888!
+  AdminPassword:
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    ConstraintDescription: Must at least has 8 characters
+    Description: Password for Control Center user admin access
+    MinLength: '8'
+    NoEcho: true
+    Type: String
+    Default: '123next!'
+  APIClientSecret:
+    AllowedPattern: '[a-zA-Z0-9#?!@$%^&*-]*'
+    Description: API Client Secret for PEP Clients with client_id apiclient, no need to specify for 8.0.2 version
+    NoEcho: true
+    Default: '123next!'
+    Type: String
+  CCAdministratorEmail:
+    Description: Administrator's email address, no need to specify for 8.0.2 version
+    Type: String
+    Default: 'kavashgar.manimarpan@nextlabs.com'
+  ControlCenterHostname:
+    AllowedPattern: ([a-zA-Z0-9]|[a-zA-Z0-9])[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]
+    Description: >
+      The short hostname you want to assign to the Control Center instance.
+      Control Center's full DNS name will be {hostname}.{DNSDomain}
+    Type: String
+    Default: 'cctest'
+  ControlCenterInstanceType:
+    Default: t2.medium
+    Description: The EC2 instance type of Control Center server, such as m4.large
+    Type: String
+  ControlCenterJVMMX:
+    Default: '4096'
+    Description: The jvmmx parameter for Control Center's Tomcat
+    MinValue: '3072'
+    Type: Number
+  DBControlCenterPassword:
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    ConstraintDescription: Must at least has 8 characters and starting with alphabet
+    Description: Password for ControlCenter database access (username is cc, dbname/serviceID is ccdb)
+    MinLength: '8'
+    NoEcho: true
+    Type: String
+    Default: 123next!
+  DNSDomain:
+    AllowedPattern: (?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\.)+[a-zA-Z]{2,63}$)
+    Description: The Domain name for the instances created, should be the Route53 hosted zone domain name
+    Type: String
+    Default: cloudaz.com
+  EC2SubnetIDs:
+    Description: >
+      The Subnets inside which EC2 isntances will be created, at minimun specify 2 subnets, must in the
+      VPC specified and must be in different availability zones
+    Type: List<AWS::EC2::Subnet::Id>
+    Default: subnet-555aa478,subnet-2e832a67,subnet-76e4182d,subnet-2e06f212
+  JPCHostname:
+    AllowedPattern: ([a-zA-Z0-9]|[a-zA-Z0-9])[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]
+    Description: >
+      The short hostname you want to assign to the Java Policy Controller
+      instance. Java Policy Controller's full DNS name will be {hostname}.{DNSDomain}
+    Type: String
+    Default: jpctest
+  JavaPolicyControllerInstanceType:
+    Default: t2.small
+    Description: The EC2 instance type of Java Policy Controller server, such as t2.micro
+    Type: String
+  KeyPairName:
+    Description: The SSH Keypair you want to use to connect to EC2 instances
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: saas-trails
+  KeystorePassword:
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    ConstraintDescription: Must at least has 6 characters
+    Description: The password required for accessing the Encryption Key Store for the Control Center server
+    MinLength: '6'
+    NoEcho: true
+    Type: String
+    Default: 123next!
+  MailServerFrom:
+    Description: The mail from email address, skip if not using mail server
+    Type: String
+    Default: admin@cloudaz.com
+  MailServerPasssord:
+    Description: The mail server password, skip if not using mail server
+    Type: String
+    NoEcho: true
+    Default: sgjunjhxnqisfmwr
+  MailServerPort:
+    Default: '587'
+    Description: The mail server smtp port, skip if not using mail server
+    Type: Number 
+  MailServerSSL:
+    AllowedValues:
+    - 'true'
+    - 'false'
+    Description: Whether the mail server is over ssl/tls, skip if not using mail server
+    Default: 'true'
+    Type: String
+  MailServerTo:
+    Description: The mail server to email address, skip if not using mail server
+    Type: String
+    Default: admin@cloudaz.com
+  MailServerURL:
+    Description: The mail server smtp host, skip if not using mail server
+    Type: String
+    Default: smtp.gmail.com
+  PlatformVersion:
+    Description: The Platform version
+    AllowedValues:
+    - '8.6.4'
+    Default: '8.6.4'
+    Type: String
+  MailServerUsername:
+    Description: The mail server username, skip if not using mail server
+    Type: String
+    Default: admin@cloudaz.com
+  RDSType:
+    AllowedValues:
+    - POSTGRES
+    - ORACLE
+    Default: POSTGRES
+    Description: The RDS type
+    Type: String
+  Route53PrivateHostedZone:
+    Description: The Private Route53 Hosted Zone for the DNSDomain specified
+    Type: AWS::Route53::HostedZone::Id
+    Default: Z308H1K4ZOS5QW
+  Route53PublicHostedZone:
+    Description: The Public Route53 Hosted Zone for the DNSDomain specified
+    Type: AWS::Route53::HostedZone::Id
+    Default: Z2XMYMKNUR32G9
+  SSLCertPassword:
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    ConstraintDescription: Must at least has 6 characters
+    Description: The SSL certificate password for the Control Center server
+    MinLength: '6'
+    NoEcho: true
+    Type: String
+    Default: 123next!
+  SSLCertificateId:
+    Description: The ARN of the SSL certificate to use for the load balancers of Control Center and JPC, refer to AWS Certificate Manager
+    Type: String
+    Default: arn:aws:acm:us-east-1:488100914863:certificate/15b06260-ceb2-43c8-9add-46741374ae2e
+  VpcId:
+    Description: The VPC where you want to create EC2 and RDS instances
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-fdcce59a
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: AWS Instance/Network Configuration
+      Parameters:
+      - VpcId
+      - EC2SubnetIDs
+      - DNSDomain
+      - Route53PrivateHostedZone
+      - Route53PublicHostedZone
+      - KeyPairName
+      - SSLCertificateId
+      - ControlCenterInstanceType
+      - JavaPolicyControllerInstanceType
+      - ControlCenterJVMMX
+    - Label:
+        default: CloudAz Setup Configuration
+      Parameters:
+      - PlatformVersion
+      - APIClientSecret
+    - Label:
+        default: Database Configuration
+      Parameters:
+      - RDSType
+      - DBControlCenterPassword
+    - Label:
+        default: Control Center Server Configuration
+      Parameters:
+      - AdminPassword
+      - CCAdministratorEmail
+      - ControlCenterHostname
+      - KeystorePassword
+      - SSLCertPassword
+      - MailServerFrom
+      - MailServerTo
+      - MailServerPasssord
+      - MailServerPort
+      - MailServerSSL
+      - MailServerURL
+      - MailServerUsername
+    - Label:
+        default: Policy Controller Configuration
+      Parameters:
+      - JPCHostname
+    ParameterLabels:
+      VpcId:
+        default: "Which VPC should this be deployed to?"
+      EC2SubnetIDs:
+        default: "Which EC2 Subnets under the VPC should this be deployed to?"
+      DNSDomain:
+        default: "Route53 Domain"
+      Route53PublicHostedZone:
+        default: "Public Route53 Hosted Zone of the domain"
+      Route53PrivateHostedZone:
+        default: "Private Route53 Hosted Zone of the domain"
+      KeyPairName:
+        default: "EC2 SSH key pair"
+      SSLCertificateId:
+        default: "SSL Certificate ARN"
+      ControlCenterInstanceType:
+        default: "Control Center EC2 Instance Type"
+      JavaPolicyControllerInstanceType:
+        default: "Policy Controller EC2 Instance Type"
+      ControlCenterJVMMX:
+        default: "Maximum Memory Allocated to Control Center"
+      DBControlCenterPassword:
+        default: "RDS Database Password"
+      APIClientSecret:
+        default: "PEP API Client Secret"
+      CCAdministratorEmail:
+        default: "Control Center Administrator's Email"
+      ControlCenterHostname:
+        default: "Control Center Hostname"
+      KeystorePassword:
+        default: "Encryption Store Password"
+      SSLCertPassword:
+        default: "SSL Password"
+      JPCHostname:
+        default: "Policy Controller Hostname"
+Conditions:
+  Create864Version: !Equals [ !Ref PlatformVersion, '8.6.4' ]
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Sub "Subnet Group for stack ${AWS::StackName}"
+      SubnetIds: !Ref EC2SubnetIDs
+  
+  Platform864Stack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: DBSubnetGroup
+    Condition: Create864Version
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/cf-templates-nextlabs/platform/latest/rds-consolidated-templates/stack.yaml
+      Parameters:
+        RDSInstanceEndpointAddress: !Ref RDSInstanceEndpointAddress
+        AdminPassword: !Ref AdminPassword
+        RDSType: !Ref RDSType
+        CCInstallerS3Url: s3://nxtlbsrelease/Platform_SAAS/cc/ControlCenter-Linux-chef-SaaS-8.6.4.1-28.zip
+        CCSamplePolicyS3Url: s3://nxtlbsrelease/Platform_SAAS/sample_files/sample_policy.bin
+        Oauth2JWTSecretPluginS3Url: s3://nxtlbsrelease/Platform_SAAS/Oauth2JWTSecret_Plugin/Oauth2JWTSecret-Plugin-8.1.2.zip
+        JPCInstallerS3Url: s3://nxtlbsrelease/Platform_SAAS/jpc/PolicyControllerJava-chef-8.6.4.1-28.zip
+        DBMasterName: !Ref DBMasterName
+        DBMasterUsername: !Ref DBMasterUsername
+        DBMasterUserPassword: !Ref DBMasterUserPassword
+        SSLCertPassword: !Ref SSLCertPassword
+        KeystorePassword: !Ref KeystorePassword
+        HeartbeatIntervalInMinutes: 1
+        MailServerURL: !Ref MailServerURL
+        MailServerPort: !Ref MailServerPort
+        MailServerUsername: !Ref MailServerUsername
+        MailServerPasssord: !Ref MailServerPasssord
+        MailServerFrom: !Ref MailServerFrom
+        MailServerTo: !Ref MailServerTo
+        MailServerSSL: !Ref MailServerSSL
+        VpcId: !Ref VpcId
+        EC2SubnetIDs: !Join [',', !Ref EC2SubnetIDs]
+        DBSubnetGroupName: !Ref DBSubnetGroup
+        KeyPairName: !Ref KeyPairName
+        ControlCenterHostname: !Ref ControlCenterHostname
+        JPCHostname: !Ref JPCHostname
+        DNSDomain: !Ref DNSDomain
+        Route53PublicHostedZone: !Ref Route53PublicHostedZone
+        Route53PrivateHostedZone: !Ref Route53PrivateHostedZone
+        SSLCertificateId: !Ref SSLCertificateId
+        ControlCenterInstanceType: !Ref ControlCenterInstanceType
+        JavaPolicyControllerInstanceType: !Ref JavaPolicyControllerInstanceType
+        ControlCenterJVMMX: !Ref ControlCenterJVMMX
+
+Outputs:
+  HelpUrl:
+    Description: The URL of help system
+    Value: !Sub https://${ControlCenterHostname}.${DNSDomain}/help/CloudAzHelp.html
+  ConsoleURL:
+    Description: The URL of Control Center Console
+    Value: !Sub https://${ControlCenterHostname}.${DNSDomain}/console
+  JPCRestEndpoint:
+    Description: The Java Policy Controller Rest API URL
+    Value: !Sub https://${JPCHostname}.${DNSDomain}/dpc/authorization/pdp
+  PolicyManagementServer:
+    Description: The Policy Management Server is the machine where the Control Center
+      is installed, this value would need to be specified while connecting to policy
+      studio
+    Value: !Sub ${ControlCenterHostname}.${DNSDomain}:8443
+  ReporterURL:
+    Description: The URL where Reporter is installed
+    Value: !Sub https://${ControlCenterHostname}.${DNSDomain}/reporter

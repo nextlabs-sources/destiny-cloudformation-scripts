@@ -1,0 +1,131 @@
+{
+  "StackName": "platform-stack-unified-804-using-postgres",
+  "TemplateURL": "https://s3.amazonaws.com/cf-templates-nextlabs/platform/stable/stack_unified.yaml",
+  "Parameters": [
+    {
+      "ParameterKey": "AdminPassword",
+      "ParameterValue": "123next!"
+    },
+    {
+      "ParameterKey": "APIClientSecret",
+      "ParameterValue": "123next!"
+    },
+    {
+      "ParameterKey": "ControlCenterHostname",
+      "ParameterValue": "us-east-1-cc"
+    },
+    {
+      "ParameterKey": "ControlCenterInstanceType",
+      "ParameterValue": "t2.medium"
+    },
+    {
+      "ParameterKey": "ControlCenterJVMMX",
+      "ParameterValue": "4096"
+    },
+    {
+      "ParameterKey": "DBInstanceClass",
+      "ParameterValue": "db.m4.large"
+    },
+    {
+      "ParameterKey": "DBControlCenterPassword",
+      "ParameterValue": "123next!"
+    },
+    {
+      "ParameterKey": "DNSDomain",
+      "ParameterValue": "pm.nextlabs.solutions"
+    },
+    {
+      "ParameterKey": "EC2SubnetIDs",
+      "ParameterValue": "subnet-ce5984e3,subnet-f0a160cc,subnet-03b23e4a,subnet-e6b565bd"
+    },
+    {
+      "ParameterKey": "JPCHostname",
+      "ParameterValue": "us-east-1-jpc"
+    },
+    {
+      "ParameterKey": "JavaPolicyControllerInstanceType",
+      "ParameterValue": "t2.micro"
+    },
+    {
+      "ParameterKey": "KeyPairName",
+      "ParameterValue": "sgdc-dev"
+    },
+    {
+      "ParameterKey": "KeystorePassword",
+      "ParameterValue": "123next!store"
+    },
+    {
+      "ParameterKey": "MailServerFrom",
+      "ParameterValue": ""
+    },
+    {
+      "ParameterKey": "MailServerTo",
+      "ParameterValue": ""
+    },
+    {
+      "ParameterKey": "MailServerPasssord",
+      "ParameterValue": ""
+    },
+    {
+      "ParameterKey": "MailServerPort",
+      "ParameterValue": "25"
+    },
+    {
+      "ParameterKey": "MailServerSSL",
+      "ParameterValue": "true"
+    },
+    {
+      "ParameterKey": "MailServerURL",
+      "ParameterValue": ""
+    },
+    {
+      "ParameterKey": "MailServerUsername",
+      "ParameterValue": ""
+    },
+    {
+      "ParameterKey": "PlatformVersion",
+      "ParameterValue": "8.0.4"
+    },
+    {
+      "ParameterKey": "RDSType",
+      "ParameterValue": "POSTGRES"
+    },
+    {
+      "ParameterKey": "Route53PrivateHostedZone",
+      "ParameterValue": "ZT7T7QZ59YZ8M"
+    },
+    {
+      "ParameterKey": "Route53PublicHostedZone",
+      "ParameterValue": "Z23UN70Z082V20"
+    },
+    {
+      "ParameterKey": "SSLCertPassword",
+      "ParameterValue": "123next!ssl"
+    },
+    {
+      "ParameterKey": "SSLCertificateId",
+      "ParameterValue": "arn:aws:acm:us-east-1:167566316586:certificate/c8f1ae63-3441-4e63-a9d7-9f7a958a473b"
+    },
+    {
+      "ParameterKey": "VpcId",
+      "ParameterValue": "vpc-304c4657"
+    }
+  ],
+  "Capabilities": [
+    "CAPABILITY_IAM"
+  ],
+  "Tags": [
+    {
+      "Key": "Owner",
+      "Value": "Duan Shiqiang"
+    },
+    {
+      "Key": "Purpose",
+      "Value": "RandD-Engr"
+    },
+    {
+      "Key": "Project",
+      "Value": "Platform"
+    }
+  ]
+}

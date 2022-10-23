@@ -1,0 +1,65 @@
+{
+  "Description": "Oracle RDS Template",
+  "Parameters": {
+    "DBMasterUsername": {
+      "Description": "Username for RDS database",
+      "MinLength": "2",
+      "AllowedPattern": "[a-zA-Z]*",
+      "Type": "String",
+      "ConstraintDescription": "Must at least has 2 characters and only letters are allowed"
+    },
+    "DBMasterUserPassword": {
+      "Description": "Password for RDS database access",
+      "Type": "String",
+      "AllowedPattern": "[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*",
+      "MinLength": "8",
+      "ConstraintDescription": "Must at least has 8 characters",
+      "NoEcho": true
+    },
+    "DBSubnetGroupName": {
+      "Description": "SubnetGroup for RDS instance to be created in",
+      "Type": "String"
+    },
+    "RDSVPCSecurityGroupID": {
+      "Description": "The VPC Security Group to apply to the RDS instance",
+      "Type": "AWS::EC2::SecurityGroup::Id"
+    },
+    "DBInstanceClass": {
+      "Description": "The instance type, such as db.m4.large",
+      "Type": "String",
+      "Default": "db.m4.large"
+    },
+    "DBName": {
+      "Description": "Oracle DB Service Name/SID. Default is ORCL",
+      "Type": "String",
+      "MinLength": "2",
+      "AllowedPattern": "[a-zA-Z]*",
+      "ConstraintDescription": "Must at least has 2 alphabets",
+      "Default": "ORCL"
+    }
+  },
+  "Resources": {
+    "RDSInstance": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "AllocatedStorage": "200",
+        "DBInstanceClass": {"Ref": "DBInstanceClass"},
+        "Engine": "oracle-se1",
+        "EngineVersion": "11.2.0.4.v6",
+        "LicenseModel": "license-included",
+        "PubliclyAccessible": false,
+        "DBSubnetGroupName": {"Ref": "DBSubnetGroupName"},
+        "VPCSecurityGroups": [{"Ref": "RDSVPCSecurityGroupID"}],
+        "MasterUsername": {"Ref": "DBMasterUsername"},
+        "MasterUserPassword": {"Ref": "DBMasterUserPassword"},
+        "DBName": {"Ref": "DBName"}
+      }
+    }
+  },
+  "Outputs": {
+    "EndpointAddress": {
+      "Description": "The connection endpoint for the database.",
+      "Value": {"Fn::GetAtt": ["RDSInstance", "Endpoint.Address"]}
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "StackName": "duan-rds-postgres-io1",
+  "TemplateURL": "https://s3.amazonaws.com/cf-templates-nextlabs/platform/stable/rds.yaml",
+  "Parameters": [
+    {
+      "ParameterKey": "DBMasterUsername",
+      "ParameterValue": "nextlabs"
+    },
+    {
+      "ParameterKey": "DBMasterUserPassword",
+      "ParameterValue": "123next!"
+    },
+    {
+      "ParameterKey": "DBSubnetGroupName",
+      "ParameterValue": "platform-group"
+    },
+    {
+      "ParameterKey": "RDSAllocatedStorage",
+      "ParameterValue": "500"
+    },
+    {
+      "ParameterKey": "RDSEngine",
+      "ParameterValue": "postgres"
+    },
+    {
+      "ParameterKey": "RDSStorageType",
+      "ParameterValue": "io1"
+    },
+    {
+      "ParameterKey": "RDSIops",
+      "ParameterValue": "3000"
+    },
+    {
+      "ParameterKey": "RDSVPCSecurityGroupID",
+      "ParameterValue": "sg-7517b40c"
+    }
+  ],
+  "Tags": [
+    {
+      "Key": "Owner",
+      "Value": "Duan Shiqiang"
+    },
+    {
+      "Key": "Purpose",
+      "Value": "RandD-Engr"
+    },
+    {
+      "Key": "Project",
+      "Value": "Platform"
+    }
+  ]
+}

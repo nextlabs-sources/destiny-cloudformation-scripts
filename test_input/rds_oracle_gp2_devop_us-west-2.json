@@ -1,0 +1,48 @@
+{
+  "StackName": "duan-rds-oracle-gp2",
+  "TemplateURL": "https://s3.amazonaws.com/cf-templates-nextlabs/platform/stable/rds.yaml",
+  "Parameters": [
+    {
+      "ParameterKey": "DBMasterUsername",
+      "ParameterValue": "nextlabs"
+    },
+    {
+      "ParameterKey": "DBMasterUserPassword",
+      "ParameterValue": "123next!"
+    },
+    {
+      "ParameterKey": "DBSubnetGroupName",
+      "ParameterValue": "platform-group"
+    },
+    {
+      "ParameterKey": "RDSEngine",
+      "ParameterValue": "oracle-se2"
+    },
+    {
+      "ParameterKey": "RDSAllocatedStorage",
+      "ParameterValue": "500"
+    },
+    {
+      "ParameterKey": "RDSStorageType",
+      "ParameterValue": "gp2"
+    },
+    {
+      "ParameterKey": "RDSVPCSecurityGroupID",
+      "ParameterValue": "sg-7517b40c"
+    }
+  ],
+  "Tags": [
+    {
+      "Key": "Owner",
+      "Value": "Duan Shiqiang"
+    },
+    {
+      "Key": "Purpose",
+      "Value": "RandD-Engr"
+    },
+    {
+      "Key": "Project",
+      "Value": "Platform"
+    }
+  ]
+}

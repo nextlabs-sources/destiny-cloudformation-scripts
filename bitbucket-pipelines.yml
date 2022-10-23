@@ -1,0 +1,44 @@
+image: python:3.5.1
+
+pipelines:
+  custom:
+    push2Production:
+      - step:
+          script:
+          - env
+          - pip install --upgrade awscli
+          - >
+            aws s3 sync ${BITBUCKET_CLONE_DIR} s3://cf-templates-nextlabs/platform/stable
+            --exclude "test_input/*" --exclude ".git/*" --exclude "script/*"
+            --exclude "bitbucket-pipelines.yml" --include "*.yml" --include "*.json" --delete
+
+    push2RdsConsolTestFolder:
+      - step:
+          script:
+          - env
+          - pip install --upgrade awscli
+          - >
+            aws s3 sync ${BITBUCKET_CLONE_DIR} s3://cf-templates-nextlabs/platform/latest/rds-consolidated-templates
+            --exclude "test_input/*" --exclude ".git/*" --exclude "script/*"
+            --exclude "bitbucket-pipelines.yml" --include "*.yml" --include "*.json" --delete
+
+    push2PlatformStagingS3:
+      - step:
+          script:
+          - env
+          - pip install --upgrade awscli
+          - sed -i 's@cloudazhelpsystem.s3-website-us-west-2.amazonaws.com/production@cloudazhelpsystem.s3-website-us-west-2.amazonaws.com/staging@' ${BITBUCKET_CLONE_DIR}/cc_postgres.yaml
+          - >
+            aws s3 sync ${BITBUCKET_CLONE_DIR} s3://cf-templates-nextlabs/platform/latest
+            --exclude "test_input/*" --exclude ".git/*" --exclude "script/*"
+            --exclude "bitbucket-pipelines.yml" --include "*.yml" --include "*.json" --delete
+
+    push2PlatformProductionS3:
+      - step:
+          script:
+          - env
+          - pip install --upgrade awscli
+          - >
+            aws s3 sync ${BITBUCKET_CLONE_DIR} s3://cf-templates-nextlabs/platform/stable
+            --exclude "test_input/*" --exclude ".git/*" --exclude "script/*"
+            --exclude "bitbucket-pipelines.yml" --include "*.yml" --include "*.json" --delete

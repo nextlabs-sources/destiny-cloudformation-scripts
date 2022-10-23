@@ -1,0 +1,136 @@
+{
+  "StackName": "duan-platform-CC",
+  "TemplateURL": "https://s3.amazonaws.com/cf-templates-nextlabs/platform/stable/cc_oracle.yaml",
+  "Parameters": [
+    {
+      "ParameterKey": "AdminPassword",
+      "ParameterValue": "123next!"
+    },
+    {
+      "ParameterKey": "APIUser",
+      "ParameterValue": "apiclient"
+    },
+    {
+      "ParameterKey": "APIUserPassword",
+      "ParameterValue": "123next!"
+    },
+    {
+      "ParameterKey": "CCAdministratorEmail",
+      "ParameterValue": "in@val.id"
+    },
+    {
+      "ParameterKey": "CCInstallerS3Url",
+      "ParameterValue": "s3://nxtlbsrelease/Platform_SAAS/cc/ControlCenter-Linux-chef-SaaS-8.0.6.999-Main.zip"
+    },
+    {
+      "ParameterKey": "ControlCenterInstanceType",
+      "ParameterValue": "m4.large"
+    },
+    {
+      "ParameterKey": "ControlCenterHostname",
+      "ParameterValue": "duan-cc"
+    },
+    {
+      "ParameterKey": "ControlCenterJVMMX",
+      "ParameterValue": "3072"
+    },
+    {
+      "ParameterKey": "CCSamplePolicyS3Url",
+      "ParameterValue": "s3://nxtlbsrelease/Platform_SAAS/sample_files/sample_policy.bin"
+    },
+    {
+      "ParameterKey": "CCVPCSecurityGroupID",
+      "ParameterValue": "sg-7517b40c"
+    },
+    {
+      "ParameterKey": "DBMasterName",
+      "ParameterValue": "ORCL"
+    },
+    {
+      "ParameterKey": "DBMasterUserPassword",
+      "ParameterValue": "123next!"
+    },
+    {
+      "ParameterKey": "DBMasterUsername",
+      "ParameterValue": "nextlabs"
+    },
+    {
+      "ParameterKey": "DBControlCenterPassword",
+      "ParameterValue": "123next!"
+    },
+    {
+      "ParameterKey": "DBControlCenterUsername",
+      "ParameterValue": "duand"
+    },
+    {
+      "ParameterKey": "DNSDomain",
+      "ParameterValue": "platform.nextlabs.solutions"
+    },
+    {
+      "ParameterKey": "DBControlCenterName",
+      "ParameterValue": ""
+    },
+    {
+      "ParameterKey": "EC2SubnetID",
+      "ParameterValue": "subnet-884970ec"
+    },
+    {
+      "ParameterKey": "EFSFileSystem",
+      "ParameterValue": "fs-18d911b1"
+    },
+    {
+      "ParameterKey": "HeartbeatIntervalInMinutes",
+      "ParameterValue": "1"
+    },
+    {
+      "ParameterKey": "KeyPairName",
+      "ParameterValue": "sgdc-dev"
+    },
+    {
+      "ParameterKey": "KeystorePassword",
+      "ParameterValue": "123next!"
+    },
+    {
+      "ParameterKey": "LicenseS3Url",
+      "ParameterValue": "s3://nxtlbsrelease/Platform_SAAS/license.dat"
+    },
+    {
+      "ParameterKey": "Oauth2JWTSecretPluginS3Url",
+      "ParameterValue": "s3://nxtlbsrelease/Platform_SAAS/Oauth2JWTSecret_Plugin/Oauth2JWTSecret-Plugin.zip"
+    },
+    {
+      "ParameterKey": "RDSInstanceEndpointAddress",
+      "ParameterValue": "dr1syfjagtgglyj.ce8emx7zecoq.us-west-2.rds.amazonaws.com"
+    },
+    {
+      "ParameterKey": "S3AccessKeyID",
+      "ParameterValue": "AKIAIHIMVFRHPGPZPFGQ"
+    },
+    {
+      "ParameterKey": "S3SecretAccessKey",
+      "ParameterValue": "/cmZ1lJNt7vQDd70NL2BqEM8L5EdVshYP5l+h8ey"
+    },
+    {
+      "ParameterKey": "ServerInstanceProfile",
+      "ParameterValue": "CloudAz-8618-Platform806PCVStack-5S40165VDEKX-ServerInstanceProfile-U6W2EEBTKSSV"
+    },
+    {
+      "ParameterKey": "SSLCertPassword",
+      "ParameterValue": "123next!"
+    }
+  ],
+  "Tags": [
+    {
+      "Key": "Owner",
+      "Value": "Duan Shiqiang"
+    },
+    {
+      "Key": "Purpose",
+      "Value": "RandD-Engr"
+    },
+    {
+      "Key": "Project",
+      "Value": "Platform"
+    }
+  ]
+}

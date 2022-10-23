@@ -1,0 +1,31 @@
+Description: EFS for Platform
+Parameters:
+  EFSVPCSecurityGroupID:
+    Description: Security Group for EFS access
+    Type: AWS::EC2::SecurityGroup::Id
+  EC2SubnetID:
+    Description: The ID of the subnet in which a EFS mount target will be created
+    Type: AWS::EC2::Subnet::Id
+Resources:
+  ControlCenterEFS:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      PerformanceMode: generalPurpose
+  EFSMountTarget:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId:
+        Ref: ControlCenterEFS
+      SubnetId:
+        Ref: EC2SubnetID
+      SecurityGroups:
+      - Ref: EFSVPCSecurityGroupID
+Outputs:
+  MountTargetID:
+    Description: Mount target ID
+    Value:
+      Ref: EFSMountTarget
+  FileSystemID:
+    Description: File system ID
+    Value:
+      Ref: ControlCenterEFS

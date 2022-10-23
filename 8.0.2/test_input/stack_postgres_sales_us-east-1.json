@@ -1,0 +1,165 @@
+{
+  "StackName": "duan-platform-postgres-stack",
+  "TemplateURL": "https://s3.amazonaws.com/cf-templates-nextlabs/platform/8.0.2/stack.template",
+  "Parameters": [
+    {
+      "ParameterKey": "RDSType",
+      "ParameterValue": "POSTGRES",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "AdminPassword",
+      "ParameterValue": "123next!",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "DBMasterUsername",
+      "ParameterValue": "nextlabs",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "DBMasterUserPassword",
+      "ParameterValue": "123next!",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "DBInstanceClass",
+      "ParameterValue": "db.m4.large",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "DBName",
+      "ParameterValue": "postgres",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "SSLCertPassword",
+      "ParameterValue": "123next!ssl",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "KeystorePassword",
+      "ParameterValue": "123next!store",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "HeartbeatIntervalInMinutes",
+      "ParameterValue": "1",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "MailServerURL",
+      "ParameterValue": "",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "MailServerPort",
+      "ParameterValue": "25",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "MailServerUsername",
+      "ParameterValue": "",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "MailServerPasssord",
+      "ParameterValue": "",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "MailServerFrom",
+      "ParameterValue": "",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "MailServerTo",
+      "ParameterValue": "",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "MailServerSSL",
+      "ParameterValue": "true",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "VpcId",
+      "ParameterValue": "vpc-8e7872e9",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "EC2SubnetIDs",
+      "ParameterValue": "subnet-6a78a547,subnet-0d6ce044,subnet-e7b475db,subnet-b2d505e9",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "DBSubnetGroupName",
+      "ParameterValue": "Platform-Subnetgroup",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "KeyPairName",
+      "ParameterValue": "sgdc-dev",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "ControlCenterHostname",
+      "ParameterValue": "duanpostgres-cc",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "JPCHostname",
+      "ParameterValue": "duanpostgres-jpc",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "DNSDomain",
+      "ParameterValue": "sales.nextlabs.solutions",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "Route53PublicHostedZone",
+      "ParameterValue": "Z1ZSQOLVGD7DPX",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "Route53PrivateHostedZone",
+      "ParameterValue": "ZXQOZAR5V0EH6",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "SSLCertificateId",
+      "ParameterValue": "arn:aws:acm:us-east-1:025378961092:certificate/592ae5de-b68e-47c2-8597-39c092a4f93d",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "ControlCenterInstanceType",
+      "ParameterValue": "m4.large",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "JavaPolicyControllerInstanceType",
+      "ParameterValue": "t2.micro",
+      "UsePreviousValue": true
+    },
+    {
+      "ParameterKey": "ControlCenterJVMMX",
+      "ParameterValue": "6144",
+      "UsePreviousValue": true
+    }
+  ],
+  "Tags": [
+    {
+      "Key": "Owner",
+      "Value": "Duan Shiqiang"
+    },
+    {
+      "Key": "Purpose",
+      "Value": "RandD-Engr"
+    },
+    {
+      "Key": "Project",
+      "Value": "Platform"
+    }
+  ]
+}

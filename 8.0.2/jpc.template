@@ -1,0 +1,399 @@
+{
+  "Description": "Java Policy Controller Stack Template",
+  "Parameters": {
+    "EC2SubnetID": {
+      "Description": "The Subnet inside which EC2 isntances will be created, must in the VPC specified",
+      "Type": "AWS::EC2::Subnet::Id"
+    },
+    "KeyPairName": {
+      "Description": "The SSH Keypair you want to used to connect to EC2 instances",
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+    "JPCVPCSecurityGroupID": {
+      "Description": "The VPC Security Group to apply to the EC2 instance",
+      "Type": "AWS::EC2::SecurityGroup::Id"
+    },
+    "ControlCenterHost": {
+      "Description": "The Control Center host to connect",
+      "Type": "String"
+    },
+    "DNSDomain": {
+      "Description": "The domain for the instance (the Route53 domain)",
+      "Type": "String",
+      "AllowedPattern": "(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\\.)+[a-zA-Z]{2,63}$)"
+    },
+    "JPCMachineName": {
+      "Description": "The machine name given to the jpc instance, will be used to compose the DNS name",
+      "Type": "String",
+      "AllowedPattern": "([a-zA-Z0-9]|[a-zA-Z0-9])[a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9]"
+    },
+    "S3AccessKeyID": {
+      "Description": "The access key ID for accessing S3 file such as installer and license file",
+      "Type": "String"
+    },
+    "S3SecretAccessKey": {
+      "Description": "The access key secret for accessing S3 file such as installer and license file",
+      "Type": "String",
+      "NoEcho": true
+    },
+    "JPCInstallerS3Url": {
+      "Description": "The S3 url for Java Policy Controller installer",
+      "Type": "String"
+    },
+    "JPCInstanceType": {
+      "Description": "The instance type, such as t2.micro",
+      "Type": "String",
+      "Default": "m4.large"
+    }
+  },
+  "Mappings": {
+    "AWSRegionAmazAMI": {
+      "us-east-1"      : {"id": "ami-c481fad3"},
+      "us-west-2"      : {"id": "ami-b04e92d0"},
+      "us-west-1"      : {"id": "ami-de347abe"},
+      "eu-west-1"      : {"id": "ami-d41d58a7"},
+      "eu-central-1"   : {"id": "ami-0044b96f"},
+      "ap-northeast-1" : {"id": "ami-1a15c77b"},
+      "ap-northeast-2" : {"id": "ami-a04297ce"},
+      "ap-southeast-1" : {"id": "ami-7243e611"},
+      "ap-southeast-2" : {"id": "ami-55d4e436"},
+      "sa-east-1"      : {"id": "ami-b777e4db"},
+      "ap-south-1"     : {"id": "ami-cacbbea5"}
+    }
+  },
+  "Resources": {
+    "JPCInstance": {
+      "Type": "AWS::EC2::Instance",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "configSets": {"InstallAndRun": [
+            "InstallJava",
+            "InstallTomcat",
+            "InstallAndConfigureJPC",
+            "InstallAndConfigureHttpd"
+          ]},
+          "InstallJava": {
+            "packages": {
+              "yum": {
+                "java-1.8.0-openjdk": []
+              }
+            }
+          },
+          "InstallTomcat": {
+            "packages": {
+              "yum": {
+                "tomcat8": ["8.0.36"]
+              }
+            },
+            "commands": {
+              "01_modify_tomcat_service_boot": {
+                "command": "chkconfig --level 345 tomcat8 on"
+              }
+            }
+          },
+          "InstallAndConfigureJPC": {
+            "commands": {
+              "01_add_hostname_to_hosts_file": {
+                "command": "echo 127.0.0.1 $(hostname) >> /etc/hosts"
+              },
+              "02_download_build": {
+                "command": {"Fn::Join": ["", [
+                  "aws s3 cp ", {"Ref": "JPCInstallerS3Url"}, " ", "/tmp/PolicyControllerJava.zip"
+                ]]},
+                "env": {
+                  "AWS_ACCESS_KEY_ID": {"Ref": "S3AccessKeyID"},
+                  "AWS_SECRET_ACCESS_KEY": {"Ref": "S3SecretAccessKey"}
+                }
+              },
+              "03_unpack_installer": {
+                "command": "unzip -o -q /tmp/PolicyControllerJava.zip -d /usr/local"
+              },
+              "04_fix_file_permissions": {
+                "command": "chmod +x /usr/local/Policy_Controller_Java/install.sh"
+              },
+              "05_create_installation_folder": {
+                "command": "mkdir -p /usr/share/tomcat8/nextlabs"
+              },
+              "06_change_jpc_properties_file": {
+                "command": {"Fn::Join": ["", [
+                  "cat > /usr/local/Policy_Controller_Java/jpc_properties.json <<EOF", "\n",
+                  "{", "\"server_ip\": \"localhost\",",
+                  "\"server_port\": \"8080\",",
+                  "\"server_type\": \"TOMCAT\",",
+                  "\"agent_type\": \"PORTAL\",",
+                  "\"policy_controller_host\": \"jpc_host\",",
+                  "\"policy_controller_port\": \"58443\",",
+                  "\"cc_host\": \"", {"Ref": "ControlCenterHost"}, "\",",
+                  "\"cc_port\": \"8443\",",
+                  "\"drive_root_dir\": \"/dev/xvda1\",",
+                  "\"installation_dir\": \"/usr/share/tomcat8/nextlabs\",",
+                  "\"dpc_path\": \"/usr/share/tomcat8/nextlabs/dpc\",",
+                  "\"jboss_installation_type\": \"standalone\",",
+                  "\"temp_dir\": \"/tmp\",",
+                  "\"required_disk_space_mb\": \"250\",",
+                  "\"version_number\": \"8.0.0\",",
+                  "\"built_date\": \"2016-03-24\"", "}", "\n",
+                  "EOF"
+                ]]}
+              },
+              "07_install_server": {
+                "command": "/usr/local/Policy_Controller_Java/install.sh -s",
+                "env": {
+                  "CATALINA_HOME": "/usr/share/tomcat8"
+                }
+              },
+              "08_add_ajp_connector": {
+                "command": "sed -i \"s|<Service name='CE-Core'>|<Service name='CE-Core'>\\n        <Connector port='58009' protocol='AJP/1.3'/>|\" /usr/share/tomcat8/conf/server.xml"
+              },
+              "09_set_rmi_hostname_para_and_dont_care_option": {
+                "command": {"Fn::Join": ["", [
+                  "echo CATALINA_OPTS=\\\"-Dnextlabs.dont.care.acceptable=true -Djava.rmi.server.hostname=",
+                  {"Ref": "JPCMachineName"}, ".", {"Ref": "DNSDomain"}, "\\\"",
+                  " >> /etc/tomcat8/tomcat8.conf"
+                ]]}
+              },
+              "10_start_server": {
+                "command": "service tomcat8 start"
+              }
+            }
+          },
+          "InstallAndConfigureHttpd": {
+            "packages": {
+              "yum": {
+                "httpd24": [],
+                "mod24_ssl": [],
+                "rpm-build": [],
+                "gcc": [],
+                "openssl-devel": [],
+                "httpd24-devel": [],
+                "m4": [],
+                "autoconf": [],
+                "automake": [],
+                "readline-devel": [],
+                "mod24_perl": []
+              }
+            },
+            "files": {
+              "/etc/httpd/content_type_map.txt": {
+                "content": {"Fn::Join": ["", [
+                  "application/json json", "\n",
+                  "text/json json", "\n",
+                  "text/javascript json", "\n",
+                  "application/javascript json", "\n",
+                  "application/xml xml", "\n",
+                  "text/xml xml", "\n"
+                ]]}
+              },
+              "/etc/httpd/conf.d/jpc.conf": {
+                "content": {"Fn::Join" : ["", [
+                  "<IfModule !mod_ssl.c>", "\n",
+                  "LoadModule ssl_module modules/mod_ssl.so", "\n",
+                  "</IfModule>", "\n",
+                  "\n",
+                  "Listen 443 https", "\n",
+                  "SSLPassPhraseDialog  builtin", "\n",
+                  "SSLSessionCache         shmcb:/run/httpd/sslcache(512000)", "\n",
+                  "SSLSessionCacheTimeout  300", "\n",
+                  "SSLRandomSeed startup file:/dev/urandom  256", "\n",
+                  "SSLRandomSeed connect builtin", "\n",
+                  "SSLCryptoDevice builtin", "\n",
+                  "SSLProtocol all -SSLv3", "\n",
+                  "SSLProxyProtocol all -SSLv3", "\n",
+                  "SSLHonorCipherOrder On", "\n",
+                  "SSLCipherSuite ALL:!ADH:!EXP:!LOW:!RC2:!3DES:!SEED:!RC4:+HIGH:+MEDIUM", "\n",
+                  "\n",
+                  "<IfModule !mod_auth_cas.c>", "\n",
+                  "LoadModule auth_cas_module modules/mod_auth_cas.so", "\n",
+                  "</IfModule>", "\n",
+                  "CASVersion 2", "\n",
+                  "CASCookiePath /etc/httpd/cas/", "\n",
+                  "CASLoginURL https://", {"Ref": "JPCMachineName"}, ".", {"Ref": "DNSDomain"}, "/401", "\n",
+                  "CASValidateURL https://", {"Ref": "ControlCenterHost"}, "/cas/serviceValidate", "\n",
+                  "CASValidateServer Off", "\n",
+                  "\n",
+                  "PerlRequire /etc/httpd/perl/startup.pl", "\n",
+                  "\n",
+                  "<VirtualHost *:443>", "\n",
+                  "CustomLog logs/jpc.log combined", "\n",
+                  "KeepAlive On", "\n",
+                  "Servername ", {"Ref": "JPCMachineName"}, ".", {"Ref": "DNSDomain"}, "\n",
+                  "SSLEngine On", "\n",
+                  "SSLProxyEngine On", "\n",
+                  "ProxyRequests Off", "\n",
+                  "SSLCertificateFile  /etc/httpd/ssl/server.crt", "\n",
+                  "SSLCertificateKeyFile /etc/httpd/ssl/server.key", "\n",
+                  "\n",
+                  "<Location /dpc/PDPConnector/go>", "\n",
+                  "Authtype CAS", "\n",
+                  "require valid-user", "\n",
+                  "ProxyPass \"ajp://127.0.0.1:58009/dpc/authorization/pdp\"", "\n",
+                  "</Location>", "\n",
+                  "\n",
+                  "<Location /dpc/authorization/pdp>", "\n",
+                  "Authtype CAS", "\n",
+                  "require valid-user", "\n",
+                  "ProxyPass \"ajp://127.0.0.1:58009/dpc/authorization/pdp\"", "\n",
+                  "</Location>", "\n",
+                  "\n",
+                  "<Location /dpc/authorization/pdp/help>", "\n",
+                  "ProxyPass \"ajp://127.0.0.1:58009/dpc/authorization/pdp/help\"", "\n",
+                  "Require all granted", "\n",
+                  "</Location>", "\n",
+                  "\n",
+                  "<Location /cas/>", "\n",
+                  "ProxyPass \"https://", {"Ref": "ControlCenterHost"}, "/cas/\"",  "\n",
+                  "ProxyPassReverse \"https://", {"Ref": "ControlCenterHost"}, "/cas/\"", "\n",
+                  "</Location>", "\n",
+                  "\n",
+                  "<Location /401>", "\n",
+                  "SetHandler perl-script", "\n",
+                  "PerlResponseHandler JPC::Unauthorized", "\n",
+                  "</Location>", "\n",
+                  "\n",
+                  "</VirtualHost>", "\n"
+                ]]},
+                "mode": "000644",
+                "owner" : "root",
+                "group" : "root"
+              }
+            },
+            "commands": {
+              "01_add_servername_to_hosts_file": {
+                "command": {"Fn::Join": ["", ["echo ", "\"127.0.0.1 ", {"Ref": "JPCMachineName"}, ".", {"Ref": "DNSDomain"}, "\" >> /etc/hosts"]]}
+              },
+              "02_download_mod_auth_cas_src_rpm": {
+                "command": "wget -P /tmp https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/21/Everything/source/SRPMS/m/mod_auth_cas-1.0.8.1-11.fc21.src.rpm"
+              },
+              "03_rebuild_mod_auth_cas": {
+                "command": "rpmbuild --rebuild /tmp/mod_auth_cas-1.0.8.1-11.fc21.src.rpm"
+              },
+              "04_install_mod_auth_cas": {
+                "command": "rpm -i /rpmbuild/RPMS/x86_64/mod_auth_cas-1.0.8.1-11.amzn1.x86_64.rpm"
+              },
+              "05_remove_unnecessary_vhost": {
+                "command": "rm -f /etc/httpd/conf.d/welcome.conf /etc/httpd/conf.d/auth_cas.conf /etc/httpd/conf.d/userdir.conf /etc/httpd/conf.d/ssl.conf"
+              },
+              "06_create_cas_cookie_folder": {
+                "command": "mkdir -p /etc/httpd/cas && chmod 775 /etc/httpd/cas && chown apache: /etc/httpd/cas"
+              },
+              "07_create_perl_script_folder": {
+                "command": "mkdir -p /etc/httpd/perl/JPC && chmod -R 775 /etc/httpd/perl/JPC && chown -R apache: /etc/httpd/perl/JPC"
+              },
+              "08_create_perl_startup_script": {
+                "command": {"Fn::Join": ["", [
+                  "cat >> /etc/httpd/perl/startup.pl <<-EOF", "\n",
+                  "use lib qw(/etc/httpd/perl);", "\n",
+                  "1;", "\n",
+                  "EOF"
+                ]]}
+              },
+              "09_create_jpc_401_script": {
+                "command": {"Fn::Join": ["", [
+                  "cat >> /etc/httpd/perl/JPC/Unauthorized.pm <<-EOF", "\n",
+                  "package JPC::Unauthorized;", "\n",
+                  "use strict;", "\n",
+                  "use warnings;", "\n",
+                  "use Apache2::RequestRec ();", "\n",
+                  "use Apache2::RequestIO ();", "\n",
+                  "use Apache2::Response ();", "\n",
+                  "use APR::Table ();", "\n",
+                  "use Apache2::Const -compile => qw(OK AUTH_REQUIRED);", "\n",
+                  "sub handler {", "\n",
+                  "  my \\$r = shift;", "\n",
+                  "  my \\$response_text = '';", "\n",
+                  "  if ((\\$r->headers_in->{Accept} || '') =~ /xml/) {", "\n",
+                  "    \\$r->content_type('application/xml');", "\n",
+                  "    \\$response_text = '<?xml version=\"1.0\" encoding=\"UTF-8\"?><Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>';", "\n",
+                  "  } else {", "\n",
+                  "    \\$r->content_type('application/json');", "\n",
+                  "    \\$response_text = '{\"Error\":{\"Code\":\"AccessDenied\",\"Message\":\"Access Denied\"}}';", "\n",
+                  "  }", "\n",
+                  "  \\$r->custom_response(Apache2::Const::AUTH_REQUIRED, \\$response_text);", "\n",
+                  "  return Apache2::Const::AUTH_REQUIRED;", "\n",
+                  "}", "\n",
+                  "1;", "\n",
+                  "EOF", "\n",
+                  "\n"
+                ]]}
+              },
+              "10_create_ssl_folder": {
+                "command": "mkdir -p /etc/httpd/ssl"
+              },
+              "11_generate_ssl_certs": {
+                "command": {"Fn::Join": ["", [
+                  "openssl req -x509 -nodes -days 3650 -newkey rsa:2048 ",
+                  "-subj \"/C=US/ST=CA/L=San Mateo/O=NextLabs/OU=CompliantEnterprise/CN=",
+                  {"Ref": "JPCMachineName"}, ".", {"Ref": "DNSDomain"}, "\"", " ",
+                  "-keyout /etc/httpd/ssl/server.key -out /etc/httpd/ssl/server.crt"
+                ]]}
+              },
+              "12_modify_httpd_service_boot": {
+                "command": "chkconfig --level 345 httpd on"
+              },
+              "13_start_server": {
+                "command": "service httpd start"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "ImageId": {"Fn::FindInMap": ["AWSRegionAmazAMI", {"Ref": "AWS::Region"}, "id"]},
+        "InstanceType": {"Ref": "JPCInstanceType"},
+        "Tags": [{"Key": "Name", "Value": {"Fn::Join": [" ", [{"Ref": "AWS::StackName"}, "Java Policy Controller"]]}}],
+        "KeyName": {"Ref": "KeyPairName"},
+        "NetworkInterfaces": [{
+          "AssociatePublicIpAddress": true,
+          "DeleteOnTermination": true,
+          "DeviceIndex": "0",
+          "GroupSet": [{"Ref": "JPCVPCSecurityGroupID"}],
+          "SubnetId": {"Ref": "EC2SubnetID"}
+        }],
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "VolumeType" : "gp2",
+              "DeleteOnTermination": true,
+              "VolumeSize": "50"
+            }
+          }
+        ],
+        "UserData": { "Fn::Base64" : { "Fn::Join" : ["", [
+          "#!/bin/bash -x\n",
+          "yum update -y aws-cfn-bootstrap\n",
+          "# Install the files and packages from the metadata\n",
+          "/opt/aws/bin/cfn-init -v ",
+          "         --stack ", { "Ref" : "AWS::StackName" },
+          "         --resource JPCInstance ",
+          "         --configsets InstallAndRun ",
+          "         --region ", { "Ref" : "AWS::Region" }, "\n",
+          "# Signal the status from cfn-init\n",
+          "/opt/aws/bin/cfn-signal -e $? ",
+          "         --stack ", { "Ref" : "AWS::StackName" },
+          "         --resource JPCInstance ",
+          "         --region ", { "Ref" : "AWS::Region" }, "\n"
+        ]]}}
+      },
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Timeout": "PT10M"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "InstanceRef": {
+      "Description": "The EC2 instance's instance-ID",
+      "Value": {"Ref": "JPCInstance"}
+    },
+    "PrivateIp": {
+      "Description": "The private IP of the instance",
+      "Value": {"Fn::GetAtt": ["JPCInstance", "PrivateIp"]}
+    },
+    "PrivateDnsName": {
+      "Description": "The Private DnsName of the instance",
+      "Value": {"Fn::GetAtt": ["JPCInstance", "PrivateDnsName"]}
+    }
+  }
+}

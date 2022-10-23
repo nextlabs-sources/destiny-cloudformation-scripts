@@ -1,0 +1,538 @@
+{
+  "Description": "Platform Stack Template With RDS",
+  "Parameters": {
+    "RDSType": {
+      "Description": "The RDS type",
+      "Type": "String",
+      "AllowedValues": ["MSSQL", "ORACLE", "POSTGRES"]
+    },
+    "AdminPassword": {
+      "Description": "Password for Control Center user admin access",
+      "Type": "String",
+      "AllowedPattern": "[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*",
+      "MinLength": "8",
+      "ConstraintDescription": "Must at least has 8 characters",
+      "NoEcho": true
+    },
+    "DBMasterUsername": {
+      "Description": "Username for RDS database, don't use 'cc' as it is used by Control Center scripts",
+      "MinLength": "2",
+      "AllowedPattern": "[a-zA-Z]*",
+      "Type": "String",
+      "ConstraintDescription": "Must at least has 2 characters and only letters are allowed"
+    },
+    "DBMasterUserPassword": {
+      "Description": "Password for RDS database access",
+      "Type": "String",
+      "AllowedPattern": "[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*",
+      "MinLength": "8",
+      "ConstraintDescription": "Must at least has 8 characters and starting with alphabet",
+      "NoEcho": true
+    },
+    "DBInstanceClass": {
+      "Description": "The instance type of RDS, such as db.m4.large",
+      "Type": "String",
+      "Default": "db.m4.large"
+    },
+    "DBName": {
+      "Description": "The name of the master database for POSTGRES, or service name of ORACLE, don't need specify for MSSQL",
+      "Type": "String"
+    },
+    "SSLCertPassword": {
+      "Description": "The SSL certificate password for the Control Center server",
+      "Type": "String",
+      "AllowedPattern": "[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*",
+      "MinLength": "6",
+      "ConstraintDescription": "Must at least has 6 characters",
+      "NoEcho": true
+    },
+    "KeystorePassword": {
+      "Description": "The password required for accessing the Encryption Key Store for the Control Center server",
+      "Type": "String",
+      "AllowedPattern": "[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*",
+      "MinLength": "6",
+      "ConstraintDescription": "Must at least has 6 characters",
+      "NoEcho": true
+    },
+    "HeartbeatIntervalInMinutes": {
+      "Description": "The default heartbeat interval in minutes for Policy Controllers",
+      "Type": "Number",
+      "Default": "1"
+    },
+    "MailServerURL": {
+      "Description": "The mail server smtp host",
+      "Type": "String"
+    },
+    "MailServerPort": {
+      "Description": "The mail server smtp port",
+      "Type": "Number",
+      "Default": "25"
+    },
+    "MailServerUsername": {
+      "Description": "The mail server username",
+      "Type": "String"
+    },
+    "MailServerPasssord": {
+      "Description": "The mail server password",
+      "Type": "String"
+    },
+    "MailServerFrom": {
+      "Description": "The mail from email address",
+      "Type": "String"
+    },
+    "MailServerTo": {
+      "Description": "The mail server to email address",
+      "Type": "String"
+    },
+    "MailServerSSL": {
+      "Description": "Whether the mail server is over ssl/tls",
+      "Type": "String",
+      "AllowedValues": ["true", "false"]
+    },
+    "VpcId": {
+      "Description": "The VPC where you want to create EC2 and RDS instances",
+      "Type": "AWS::EC2::VPC::Id"
+    },
+    "EC2SubnetIDs": {
+      "Description": "The Subnets inside which EC2 isntances will be created, must in the VPC specified and you should specify at least 2 subnets and not more than the nubmer of available zones in the region (recommend per subnet per available zone)",
+      "Type": "List<AWS::EC2::Subnet::Id>"
+    },
+    "DBSubnetGroupName": {
+      "Description": "SubnetGroup for RDS instance to be created in",
+      "Type": "String"
+    },
+    "KeyPairName": {
+      "Description": "The SSH Keypair you want to use to connect to EC2 instances",
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+    "ControlCenterHostname": {
+      "Description": "The short hostname you want to assign to the Control Center instance. Control Center's full DNS name will be {hostname}.{DNSDomain}",
+      "Type": "String",
+      "AllowedPattern": "([a-zA-Z0-9]|[a-zA-Z0-9])[a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9]"
+    },
+    "JPCHostname": {
+      "Description": "The short hostname you want to assign to the Java Policy Controller instance. Java Policy Controller's full DNS name will be {hostname}.{DNSDomain}",
+      "Type": "String",
+      "AllowedPattern": "([a-zA-Z0-9]|[a-zA-Z0-9])[a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9]"
+    },
+    "DNSDomain": {
+      "Description": "The Domain name for the instances created, should be the Route53 hosted zone domain name",
+      "Type": "String",
+      "AllowedPattern": "(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\\.)+[a-zA-Z]{2,63}$)"
+    },
+    "Route53PublicHostedZone": {
+      "Description": "The Public Route53 Hosted Zone for the DNSDomain specified",
+      "Type": "AWS::Route53::HostedZone::Id"
+    },
+    "Route53PrivateHostedZone": {
+      "Description": "The Private Route53 Hosted Zone for the DNSDomain specified",
+      "Type": "AWS::Route53::HostedZone::Id"
+    },
+    "SSLCertificateId": {
+      "Description": "The ARN of the SSL certificate to use for the load balancers of Control Center and JPC",
+      "Type": "String"
+    },
+    "ControlCenterInstanceType": {
+      "Description": "The EC2 instance type of Control Center server, such as t2.micro",
+      "Type": "String",
+      "Default": "m4.large"
+    },
+    "JavaPolicyControllerInstanceType": {
+      "Description": "The EC2 instance type of Java Policy Controller server, such as t2.micro",
+      "Type": "String",
+      "Default": "m4.large"
+    },
+    "ControlCenterJVMMX": {
+      "Description": "The jvmmx parameter for Control Center's Tomcat",
+      "MinValue": "3072",
+      "Type": "Number",
+      "Default": "4096"
+    }
+  },
+  "Mappings": {
+    "AWSRegionAmazAMI": {
+      "us-east-1"      : {"id": "ami-6869aa05"},
+      "us-west-2"      : {"id": "ami-7172b611"},
+      "us-west-1"       : {"id": "ami-31490d51"},
+      "eu-west-1"      : {"id": "ami-f9dd458a"},
+      "eu-central-1"   : {"id": "ami-ea26ce85"},
+      "ap-northeast-1" : {"id": "ami-374db956"},
+      "ap-northeast-2" : {"id": "ami-2b408b45"},
+      "ap-southeast-1" : {"id": "ami-a59b49c6"},
+      "ap-southeast-2" : {"id": "ami-dc361ebf"},
+      "ap-south-1"     : {"id": "ami-ffbdd790"},
+      "sa-east-1"      : {"id": "ami-6dd04501"}
+    },
+    "RDSTemplate": {
+      "MSSQL"    : {"id": "https://s3.amazonaws.com/cf-templates-1ulrrbck4duwk/platform/8.0.2/rds_mssql.template"},
+      "ORACLE"  : {"id": "https://s3.amazonaws.com/cf-templates-1ulrrbck4duwk/platform/8.0.2/rds_oracle.template"},
+      "POSTGRES": {"id": "https://s3.amazonaws.com/cf-templates-1ulrrbck4duwk/platform/8.0.2/rds_postgres.template"}
+    },
+    "CCTemplate": {
+      "MSSQL"    : {"id": "https://s3.amazonaws.com/cf-templates-1ulrrbck4duwk/platform/8.0.2/cc_mssql.template"},
+      "ORACLE"  : {"id": "https://s3.amazonaws.com/cf-templates-1ulrrbck4duwk/platform/8.0.2/cc_oracle.template"},
+      "POSTGRES": {"id": "https://s3.amazonaws.com/cf-templates-1ulrrbck4duwk/platform/8.0.2/cc_postgres.template"}
+    }
+  },
+  "Resources": {
+    "ControlCenterLBSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription" : {"Fn::Join": ["", ["Control Center Load Balancer Rules of Stack ", {"Ref": "AWS::StackName"}]]},
+        "SecurityGroupIngress" : [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "IpProtocol": "tcp",
+            "FromPort" : "8443",
+            "ToPort" : "8443"
+          },
+          {
+            "CidrIp": "0.0.0.0/0",
+            "IpProtocol": "tcp",
+            "FromPort" : "443",
+            "ToPort" : "443"
+          }
+        ],
+        "VpcId" : {"Ref": "VpcId"}
+      }
+    },
+    "JPCLBSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription" : {"Fn::Join": ["", ["Java Policy Controller Load Balancer Rules of Stack ", {"Ref": "AWS::StackName"}]]},
+        "SecurityGroupIngress" : [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "IpProtocol": "tcp",
+            "FromPort" : "1099",
+            "ToPort" : "1099"
+          },
+          {
+            "CidrIp": "0.0.0.0/0",
+            "IpProtocol": "tcp",
+            "FromPort" : "443",
+            "ToPort" : "443"
+          }
+        ],
+        "VpcId" : {"Ref": "VpcId"}
+      }
+    },
+    "JPCSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription" : {"Fn::Join": ["", ["Java Policy Controller Rules of Stack ", {"Ref": "AWS::StackName"}]]},
+        "SecurityGroupIngress" : [
+          {
+            "SourceSecurityGroupId": {"Fn::GetAtt": ["JPCLBSecurityGroup", "GroupId"]},
+            "IpProtocol": "tcp",
+            "FromPort" : "443",
+            "ToPort" : "443"
+          },
+          {
+            "SourceSecurityGroupId": {"Fn::GetAtt": ["JPCLBSecurityGroup", "GroupId"]},
+            "IpProtocol": "tcp",
+            "FromPort" : "1099",
+            "ToPort" : "1099"
+          }
+        ],
+        "VpcId" : {"Ref": "VpcId"}
+      }
+    },
+    "ControlCenterSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription" : {"Fn::Join": ["", ["Control Center Rules of Stack ", {"Ref": "AWS::StackName"}]]},
+        "SecurityGroupIngress" : [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "IpProtocol": "tcp",
+            "FromPort" : "8443",
+            "ToPort" : "8443"
+          },
+          {
+            "CidrIp": "0.0.0.0/0",
+            "IpProtocol": "tcp",
+            "FromPort" : "443",
+            "ToPort" : "443"
+          }
+        ],
+        "VpcId" : {"Ref": "VpcId"}
+      }
+    },
+    "DBSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "DependsOn": ["ControlCenterSecurityGroup"],
+      "Properties": {
+        "GroupDescription" : {"Fn::Join": ["", ["RDS Rules of Stack ", {"Ref": "AWS::StackName"}]]},
+        "SecurityGroupIngress" : [
+          {
+            "SourceSecurityGroupId": {"Fn::GetAtt": ["ControlCenterSecurityGroup", "GroupId"]},
+            "IpProtocol": "tcp",
+            "FromPort" : "1433",
+            "ToPort" : "1433"
+          },
+          {
+            "SourceSecurityGroupId": {"Fn::GetAtt": ["ControlCenterSecurityGroup", "GroupId"]},
+            "IpProtocol": "tcp",
+            "FromPort" : "5432",
+            "ToPort" : "5432"
+          },
+          {
+            "SourceSecurityGroupId": {"Fn::GetAtt": ["ControlCenterSecurityGroup", "GroupId"]},
+            "IpProtocol": "tcp",
+            "FromPort" : "1521",
+            "ToPort" : "1521"
+          }
+        ],
+        "VpcId" : {"Ref": "VpcId"}
+      }
+    },
+    "RDSInstance": {
+      "Type" : "AWS::CloudFormation::Stack",
+      "DependsOn": ["DBSecurityGroup"],
+      "Properties" : {
+        "TemplateURL": {"Fn::FindInMap": ["RDSTemplate", {"Ref": "RDSType"}, "id"]},
+        "Parameters": {
+          "DBMasterUsername": {"Ref": "DBMasterUsername"},
+          "DBMasterUserPassword": {"Ref": "DBMasterUserPassword"},
+          "DBSubnetGroupName": {"Ref": "DBSubnetGroupName"},
+          "RDSVPCSecurityGroupID": {"Fn::GetAtt": ["DBSecurityGroup", "GroupId"]},
+          "DBInstanceClass": {"Ref": "DBInstanceClass"},
+          "DBName": {"Ref": "DBName"}
+        }
+      }
+    },
+    "ControlCenterInstance": {
+      "Type" : "AWS::CloudFormation::Stack",
+      "DependsOn": ["ControlCenterSecurityGroup", "RDSInstance"],
+      "Properties": {
+        "TemplateURL": {"Fn::FindInMap": ["CCTemplate", {"Ref": "RDSType"}, "id"]},
+        "Parameters": {
+          "AdminPassword": {"Ref": "AdminPassword"},
+          "DBMasterUsername": {"Ref": "DBMasterUsername"},
+          "DBMasterUserPassword": {"Ref": "DBMasterUserPassword"},
+          "DBAuthenticateDB": {"Ref": "DBName"},
+          "DBUsername": "cc",
+          "DBPassword": {"Ref": "DBMasterUserPassword"},
+          "DatabaseName": "ccdb",
+          "RDSInstanceEndpointAddress": {"Fn::GetAtt": ["RDSInstance", "Outputs.EndpointAddress"]},
+          "EC2SubnetID": {"Fn::Select": ["0", {"Ref": "EC2SubnetIDs"}]},
+          "KeyPairName": {"Ref": "KeyPairName"},
+          "CCVPCSecurityGroupID": {"Fn::GetAtt": ["ControlCenterSecurityGroup", "GroupId"]},
+          "DNSDomain": {"Ref": "DNSDomain"},
+          "CCMachineName": {"Ref": "ControlCenterHostname"},
+          "S3AccessKeyID": "AKIAIHIMVFRHPGPZPFGQ",
+          "S3SecretAccessKey": "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",
+          "CCInstallerS3Url": "s3://nxtlbsrelease/Platform_SAAS/cc/ControlCenter-Linux-chef-SaaS-8.0.2.999-Main.zip",
+          "LicenseS3Url": "s3://nxtlbsrelease/Platform_SAAS/license.dat",
+          "SSLCertPassword": {"Ref": "SSLCertPassword"},
+          "KeystorePassword": {"Ref": "KeystorePassword"},
+          "HeartbeatIntervalInMinutes": {"Ref": "HeartbeatIntervalInMinutes"},
+          "MailServerURL": {"Ref": "MailServerURL"},
+          "MailServerPort": {"Ref": "MailServerPort"},
+          "MailServerUsername": {"Ref": "MailServerUsername"},
+          "MailServerPasssord": {"Ref": "MailServerPasssord"},
+          "MailServerFrom": {"Ref": "MailServerFrom"},
+          "MailServerTo": {"Ref": "MailServerTo"},
+          "MailServerSSL": {"Ref": "MailServerSSL"},
+          "CCInstanceType": {"Ref": "ControlCenterInstanceType"},
+          "JvmMX": {"Ref": "ControlCenterJVMMX"}
+        },
+        "TimeoutInMinutes": "15"
+      }
+    },
+    "CCLoadBalancer": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "Subnets": {"Ref": "EC2SubnetIDs"},
+        "CrossZone": true,
+        "Instances": [{"Fn::GetAtt": ["ControlCenterInstance", "Outputs.InstanceRef"]}],
+        "Listeners": [
+          {
+            "InstancePort" : "443",
+            "InstanceProtocol" : "HTTPS",
+            "LoadBalancerPort" : "443",
+            "Protocol" : "HTTPS",
+            "SSLCertificateId" : {"Ref": "SSLCertificateId"}
+          },
+          {
+            "InstancePort" : "8443",
+            "InstanceProtocol" : "TCP",
+            "LoadBalancerPort" : "8443",
+            "Protocol" : "TCP"
+          }
+
+        ],
+        "Scheme": "internet-facing",
+        "ConnectionSettings": {
+          "IdleTimeout" : 3600
+        },
+        "SecurityGroups": [{"Ref": "ControlCenterLBSecurityGroup"}]
+      }
+    },
+    "CCRoute53EntryPrivate": {
+      "Type": "AWS::Route53::RecordSet",
+      "Properties": {
+        "HostedZoneId": {"Ref": "Route53PrivateHostedZone"},
+        "Name": {"Fn::GetAtt": ["ControlCenterInstance", "Outputs.DnsName"]},
+        "Type": "A",
+        "ResourceRecords": [{"Fn::GetAtt": ["ControlCenterInstance", "Outputs.PrivateIp"]}],
+        "TTL": "300"
+      }
+    },
+    "CCLBRoute53EntryPublic": {
+      "Type": "AWS::Route53::RecordSet",
+      "Properties": {
+        "HostedZoneId": {"Ref": "Route53PublicHostedZone"},
+        "AliasTarget": {
+          "DNSName": {"Fn::GetAtt": ["CCLoadBalancer", "CanonicalHostedZoneName"]},
+          "HostedZoneId": {"Fn::GetAtt": ["CCLoadBalancer", "CanonicalHostedZoneNameID"]}
+        },
+        "Name": {"Fn::GetAtt": ["ControlCenterInstance", "Outputs.DnsName"]},
+        "Type": "A"
+      }
+    },
+    "JPCInstance": {
+      "Type" : "AWS::CloudFormation::Stack",
+      "DependsOn": ["JPCSecurityGroup", "ControlCenterInstance"],
+      "Properties": {
+        "TemplateURL": "https://s3.amazonaws.com/cf-templates-1ulrrbck4duwk/platform/8.0.2/jpc.template",
+        "Parameters": {
+          "EC2SubnetID": {"Fn::Select": ["0", {"Ref": "EC2SubnetIDs"}]},
+          "KeyPairName": {"Ref": "KeyPairName"},
+          "JPCVPCSecurityGroupID": {"Fn::GetAtt": ["JPCSecurityGroup", "GroupId"]},
+          "ControlCenterHost": {"Fn::GetAtt": ["ControlCenterInstance", "Outputs.DnsName"]},
+          "JPCMachineName": {"Ref": "JPCHostname"},
+          "DNSDomain": {"Ref": "DNSDomain"},
+          "S3AccessKeyID": "AKIAIHIMVFRHPGPZPFGQ",
+          "S3SecretAccessKey": "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",
+          "JPCInstallerS3Url": "s3://nxtlbsrelease/Platform_SAAS/jpc/PolicyControllerJava-chef-8.0.2.999.zip",
+          "JPCInstanceType": {"Ref": "JavaPolicyControllerInstanceType"}
+        },
+        "TimeoutInMinutes": "10"
+      }
+    },
+    "JPCLoadBalancer": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "Subnets": {"Ref": "EC2SubnetIDs"},
+        "CrossZone": true,
+        "Instances": [
+          {"Fn::GetAtt": ["JPCInstance", "Outputs.InstanceRef"]}
+        ],
+        "AppCookieStickinessPolicy": [
+          {
+            "CookieName": "MOD_AUTH_CAS_S",
+            "PolicyName": "CASCookieStickinessPolicy"
+          }
+        ],
+        "Listeners": [
+          {
+            "InstancePort" : "1099",
+               "InstanceProtocol" : "TCP",
+               "LoadBalancerPort" : "1099",
+               "Protocol" : "TCP"
+          },
+          {
+            "InstancePort" : "443",
+            "InstanceProtocol" : "HTTPS",
+            "LoadBalancerPort" : "443",
+            "Protocol" : "HTTPS",
+            "SSLCertificateId" : {"Ref": "SSLCertificateId"},
+            "PolicyNames": ["CASCookieStickinessPolicy"]
+          }
+        ],
+        "Scheme": "internet-facing",
+        "SecurityGroups": [{"Ref": "JPCLBSecurityGroup"}]
+      }
+    },
+    "JPCLoadBalancerInternal": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "Subnets": {"Ref": "EC2SubnetIDs"},
+        "CrossZone": true,
+        "Instances": [
+          {"Fn::GetAtt": ["JPCInstance", "Outputs.InstanceRef"]}
+        ],
+        "AppCookieStickinessPolicy": [
+          {
+            "CookieName": "MOD_AUTH_CAS_S",
+            "PolicyName": "CASCookieStickinessPolicy"
+          }
+        ],
+        "Listeners": [
+          {
+            "InstancePort" : "1099",
+               "InstanceProtocol" : "TCP",
+               "LoadBalancerPort" : "1099",
+               "Protocol" : "TCP"
+          },
+          {
+            "InstancePort" : "443",
+            "InstanceProtocol" : "HTTPS",
+            "LoadBalancerPort" : "443",
+            "Protocol" : "HTTPS",
+            "SSLCertificateId" : {"Ref": "SSLCertificateId"},
+            "PolicyNames": ["CASCookieStickinessPolicy"]
+          }
+        ],
+        "Scheme": "internal",
+        "SecurityGroups": [{"Ref": "JPCLBSecurityGroup"}]
+      }
+    },
+    "JPCLBRoute53EntryPrivate": {
+      "Type": "AWS::Route53::RecordSet",
+      "Properties": {
+        "HostedZoneId": {"Ref": "Route53PrivateHostedZone"},
+        "AliasTarget": {
+          "DNSName": {"Fn::GetAtt": ["JPCLoadBalancerInternal", "DNSName"]},
+          "HostedZoneId": {"Fn::GetAtt": ["JPCLoadBalancerInternal", "CanonicalHostedZoneNameID"]}
+        },
+        "Name": {"Fn::Join": ["", [{"Ref": "JPCHostname"}, ".", {"Ref": "DNSDomain"}]]},
+        "Type": "A"
+      }
+    },
+    "JPCLBRoute53EntryPublic": {
+      "Type": "AWS::Route53::RecordSet",
+      "Properties": {
+        "HostedZoneId": {"Ref": "Route53PublicHostedZone"},
+        "AliasTarget": {
+          "DNSName": {"Fn::GetAtt": ["JPCLoadBalancer", "CanonicalHostedZoneName"]},
+          "HostedZoneId": {"Fn::GetAtt": ["JPCLoadBalancer", "CanonicalHostedZoneNameID"]}
+        },
+        "Name": {"Fn::Join": ["", [{"Ref": "JPCHostname"}, ".", {"Ref": "DNSDomain"}]]},
+        "Type": "A"
+      }
+    }
+  },
+  "Outputs": {
+    "AdministratorURL": {
+      "Description": "The URL where Administrator is installed",
+      "Value": { "Fn::Join": [ "", [ "https://",{ "Fn::GetAtt": [ "ControlCenterInstance", "Outputs.DnsName" ]},"/administrator"]]}
+    },
+    "ReporterURL": {
+      "Description": "The URL where Reporter is installed",
+      "Value": { "Fn::Join": [ "", [ "https://",{ "Fn::GetAtt": [ "ControlCenterInstance", "Outputs.DnsName" ]},"/reporter"]]}
+    },
+    "ConsoleURL": {
+      "Description": "The URL of Control Center Console",
+      "Value": { "Fn::Join": [ "", [ "https://",{ "Fn::GetAtt": [ "ControlCenterInstance", "Outputs.DnsName" ]},"/console"]]}
+    },
+    "PolicyManagementServer": {
+      "Description": "The Policy Management Server is the machine where the Control Center is installed, this value would need to be specified while connecting to policy studio",
+      "Value": { "Fn::Join": [ "", [{ "Fn::GetAtt": [ "ControlCenterInstance", "Outputs.DnsName" ]},":8443"]]}
+    },
+    "JPCRestEndpoint": {
+      "Description": "The Java Policy Controller Rest API URL",
+      "Value": { "Fn::Join": [ "", [ "https://", {"Ref": "JPCHostname"}, ".", {"Ref": "DNSDomain"}, "/dpc/authorization/pdp"]] }
+    },
+    "JPCRestHelpUrl": {
+      "Description": "The Java Policy Controller Rest API Help Page URL",
+      "Value": { "Fn::Join": [ "", [ "https://", {"Ref": "JPCHostname"}, ".", {"Ref": "DNSDomain"}, "/dpc/authorization/pdp/help"]] }
+    },
+    "JPCRMIEndpoint": {
+      "Description": "The Java Policy Controller RMI",
+      "Value": { "Fn::Join": [ "", [ "Host: ", {"Ref": "JPCHostname"}, ".", {"Ref": "DNSDomain"}, " Port: ", "1099"]] }
+    }
+  }
+}

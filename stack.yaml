@@ -1,0 +1,702 @@
+Description: Platform Stack Template With RDS
+Mappings:
+  CCTemplate:
+    POSTGRES:
+      id: https://s3.amazonaws.com/cf-templates-nextlabs/platform/latest/rds-consolidated-templates/cc_postgres.yaml
+    ORACLE:
+      id: https://s3.amazonaws.com/cf-templates-nextlabs/platform/latest/rds-consolidated-templates/cc_oracle.yaml
+  RDSEngine:
+    POSTGRES:
+      id: postgres
+    ORACLE:
+      id: oracle-se2
+Parameters:
+  RDSInstanceEndpointAddress:
+    Description: RDS End Point Address - THis will store all DBs of cloudaz Stack
+    Type: String
+    Default: rds-saas-trial.clnsjvjxkzmx.us-east-1.rds.amazonaws.com
+  AdminPassword:
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    ConstraintDescription: Must at least has 8 characters
+    Description: Password for Control Center user admin access
+    MinLength: '8'
+    NoEcho: true
+    Type: String
+  APIUser:
+    Description: The API User to be created after CC is installed
+    Type: String
+    AllowedPattern: '[a-zA-Z]*'
+    Default: apiclient
+    MinLength: 2
+  APIUserPassword:
+    Description: The password for the API User to be created after CC is installed
+    Type: String
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    MinLength: 6
+    NoEcho: true
+    Default: 123next!
+  CCAdministratorEmail:
+    Description: Administrator's email address, not mandatory
+    Type: String
+    Default: kavashgar.manimarpan@nextlabs.com
+  CCInstallerS3Url:
+    Description: The S3 url for Control Center installer
+    Type: String
+  CCSamplePolicyS3Url:
+    Description: The S3 url for policy sample file
+    Default: s3://nxtlbsrelease/Platform_SAAS/sample_files/sample_policy.bin
+    Type: String
+  ControlCenterHostname:
+    AllowedPattern: ([a-zA-Z0-9]|[a-zA-Z0-9])[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]
+    Description: >
+      The short hostname you want to assign to the Control Center instance.
+      Control Center's full DNS name will be {hostname}.{DNSDomain}
+    Type: String
+  ControlCenterInstanceType:
+    Default: m4.large
+    Description: The EC2 instance type of Control Center server, such as t2.micro
+    Type: String
+  ControlCenterJVMMX:
+    Default: '4096'
+    Description: The jvmmx parameter for Control Center's Tomcat
+    MinValue: '3072'
+    Type: Number
+  ControlCenterStorageType:
+    Description: The storage type associated with this ec2 instance.
+    Type: String
+    AllowedValues:
+    - 'standard'
+    - 'gp2'
+    - 'io1'
+    Default: 'gp2'
+  ControlCenterAllocatedStorage:
+    Type: String
+    Description: The allocated storage size, specified in gigabytes (GB).
+    Default: '50'
+  ControlCenterIops:
+    Type: Number
+    Description: >
+      The number of I/O operations per second (IOPS) that the ec2 EBS provisions.
+      The value must be equal to or greater than 1000.
+      Specify only if you use io1 StorageType, and refer to AWS doc for allowed value
+    MinValue: 1000
+    MaxValue: 20000
+    Default: 1000
+  DBControlCenterName:
+    Description: The dbname for Control Center Server, no need to specify for ORACLE
+    Type: String
+    Default: ccdb
+  DBControlCenterPassword:
+    Type: String
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    ConstraintDescription: Must at least has 8 characters and starting with alphabet
+    Description: Password for user to be created and used for Control Center
+    NoEcho: true
+    Default: 123next!
+  DBControlCenterUsername:
+    Type: String
+    Description: User to be created and used for Control Center
+    Default: ccuser
+  DBMasterUserPassword:
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    ConstraintDescription: Must at least has 8 characters and starting with alphabet
+    Description: Password for RDS database access
+    MinLength: '8'
+    NoEcho: true
+    Type: String
+  DBMasterUsername:
+    AllowedPattern: '[a-zA-Z]*'
+    ConstraintDescription: Must at least has 2 characters and only letters are allowed
+    Description: Username for RDS database
+    MinLength: '2'
+    Type: String
+  DBMasterName:
+    Description: >
+      The name of the master database for POSTGRES, or service name of ORACLE,
+      don't need specify for MSSQL
+    Type: String
+    Default: postgres
+  DBSubnetGroupName:
+    Description: SubnetGroup for RDS instance to be created in
+    Type: String
+    Default: saas-trials-1
+  DNSDomain:
+    AllowedPattern: (?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\.)+[a-zA-Z]{2,63}$)
+    Description: The Domain name for the instances created, should be the Route53 hosted zone domain name
+    Type: String
+    Default: cloudaz.com
+  EC2SubnetIDs:
+    Description: >
+      The Subnets inside which EC2 isntances will be created, must in the
+      VPC specified and you should specify at least 2 subnets and not more than the
+      nubmer of available zones in the region (recommend per subnet per available
+      zone)
+    Type: List<AWS::EC2::Subnet::Id>
+    Default: subnet-555aa478,subnet-2e832a67,subnet-76e4182d,subnet-2e06f212
+  HeartbeatIntervalInMinutes:
+    Default: '1'
+    Description: The default heartbeat interval in minutes for Policy Controllers
+    Type: Number
+  ICENETDesiredCapacity:
+    Default: '0'
+    Description: ICENET instance numbers to be created
+    Type: Number
+  ICENETInstanceType:
+    Default: t2.medium
+    Description: The EC2 instance type of ICENET server, such as t2.medium
+    Type: String
+  ICENETJvmMX:
+    Default: '2048'
+    Description: The jvmmx parameter for ICENET's Tomcat
+    MinValue: '2048'
+    Type: Number
+  ICENETStorageType:
+    Description: The storage type associated with this ec2 instance.
+    Type: String
+    AllowedValues:
+    - 'standard'
+    - 'gp2'
+    - 'io1'
+    Default: 'gp2'
+  ICENETAllocatedStorage:
+    Type: String
+    Description: The allocated storage size, specified in gigabytes (GB).
+    Default: '50'
+  ICENETIops:
+    Type: Number
+    Description: >
+      The number of I/O operations per second (IOPS) that the ec2 EBS provisions.
+      The value must be equal to or greater than 1000.
+      Specify only if you use io1 StorageType, and refer to AWS doc for allowed value
+    MinValue: 1000
+    MaxValue: 20000
+    Default: 1000
+  JPCDesiredCapacity:
+    Default: '1'
+    Description: JPC instance numbers to be created
+    Type: String
+  JPCHostname:
+    AllowedPattern: ([a-zA-Z0-9]|[a-zA-Z0-9])[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]
+    Description: >
+      The short hostname you want to assign to the Java Policy Controller
+      instance. Java Policy Controller's full DNS name will be {hostname}.{DNSDomain}
+    Type: String
+    Default: jpctest
+  JPCInstallerS3Url:
+    Description: The S3 url for Java Policy Controller installer
+    Type: String
+  JavaPolicyControllerInstanceType:
+    Default: t2.small
+    Description: The EC2 instance type of Java Policy Controller server, such as t2.micro
+    Type: String
+  JavaPolicyControllerStorageType:
+    Description: The storage type associated with this ec2 instance.
+    Type: String
+    AllowedValues:
+    - 'standard'
+    - 'gp2'
+    - 'io1'
+    Default: 'gp2'
+  JavaPolicyControllerAllocatedStorage:
+    Type: String
+    Description: The allocated storage size, specified in gigabytes (GB).
+    Default: '50'
+  JavaPolicyControllerIops:
+    Type: Number
+    Description: >
+      The number of I/O operations per second (IOPS) that the ec2 EBS provisions.
+      The value must be equal to or greater than 1000.
+      Specify only if you use io1 StorageType, and refer to AWS doc for allowed value
+    MinValue: 1000
+    MaxValue: 20000
+    Default: 1000
+  KeyPairName:
+    Description: The SSH Keypair you want to use to connect to EC2 instances
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: saas-trails
+  KeystorePassword:
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    ConstraintDescription: Must at least has 6 characters
+    Description: The password required for accessing the Encryption Key Store for the Control Center server
+    MinLength: '6'
+    NoEcho: true
+    Type: String
+    Default: 123next!
+  LicenseInfo:
+    Description: The license info String
+    Type: String
+    Default: '{"license_info":{"expiry_date":"01/31/2027","subcription_mode":"trial"},"pdp_info":[{"id":1,"host":"jpc1","memory":"1024MB","vcpu":1}]}"}'
+  LicenseS3Url:
+    Description: The S3 url for license file
+    Type: String
+    Default: s3://nxtlbsrelease/Platform_SAAS/license.dat
+  MailServerFrom:
+    Description: The mail from email address
+    Type: String
+    Default: admin@cloudaz.com
+  MailServerPasssord:
+    Description: The mail server password
+    Type: String
+    NoEcho: true
+    Default: sgjunjhxnqisfmwr
+  MailServerPort:
+    Default: '587'
+    Description: The mail server smtp port
+    Type: Number
+  MailServerSSL:
+    AllowedValues:
+    - 'true'
+    - 'false'
+    Description: Whether the mail server is over ssl/tls
+    Type: String
+  MailServerTo:
+    Description: The mail server to email address
+    Type: String
+    Default: admin@cloudaz.com
+  MailServerURL:
+    Description: The mail server smtp host
+    Type: String
+    Default: smtp.gmail.com
+  MailServerUsername:
+    Description: The mail server username
+    Type: String
+    Default: admin@cloudaz.com
+  Oauth2JWTSecretPluginS3Url:
+    Description: The S3 url for Oauth2 JWT Secret Plugin
+    Type: String
+  RDSType:
+    AllowedValues:
+    - POSTGRES
+    - ORACLE
+    Default: POSTGRES
+    Description: The RDS type
+    Type: String
+  RDSAllocatedStorage:
+    Type: String
+    Description: The allocated storage size, specified in gigabytes (GB).
+    Default: '500'
+  RDSStorageType:
+    Description: The storage type associated with this DB instance.
+    Type: String
+    AllowedValues:
+    - 'standard'
+    - 'gp2'
+    - 'io1'
+    Default: 'gp2'
+  RDSIops:
+    Type: Number
+    Description: >
+      The number of I/O operations per second (IOPS) that the database provisions.
+      The value must be equal to or greater than 1000.
+      Specify only if you use io1 StorageType, and refer to AWS doc for allowed value
+    MinValue: 1000
+    MaxValue: 30000
+    Default: 2000
+  Route53PrivateHostedZone:
+    Description: The Private Route53 Hosted Zone for the DNSDomain specified
+    Type: AWS::Route53::HostedZone::Id
+    Default: Z308H1K4ZOS5QW
+  Route53PublicHostedZone:
+    Description: The Public Route53 Hosted Zone for the DNSDomain specified
+    Type: AWS::Route53::HostedZone::Id
+    Default: Z2XMYMKNUR32G9
+  SSLCertPassword:
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    ConstraintDescription: Must at least has 6 characters
+    Description: The SSL certificate password for the Control Center server
+    MinLength: '6'
+    NoEcho: true
+    Type: String
+    Default: 123next!
+  SSLCertificateId:
+    Description: The ARN of the SSL certificate to use for the load balancers of Control Center and JPC
+    Type: String
+    Default: arn:aws:acm:us-east-1:488100914863:certificate/15b06260-ceb2-43c8-9add-46741374ae2e
+  VpcId:
+    Description: The VPC where you want to create EC2 and RDS instances
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-fdcce59a
+Resources:
+  ControlCenterLBSecurityGroup:
+    Properties:
+      GroupDescription: !Sub Control Center Load Balancer Rules of Stack ${AWS::StackName}
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: '8443'
+        IpProtocol: tcp
+        ToPort: '8443'
+      - CidrIp: 0.0.0.0/0
+        FromPort: '443'
+        IpProtocol: tcp
+        ToPort: '1443'
+      VpcId: !Ref VpcId
+    Type: AWS::EC2::SecurityGroup
+  JPCLBSecurityGroup:
+    Properties:
+      GroupDescription: !Sub Java Policy Controller Load Balancer Rules of Stack ${AWS::StackName}
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: '443'
+        IpProtocol: tcp
+        ToPort: '443'
+      VpcId: !Ref VpcId
+    Type: AWS::EC2::SecurityGroup
+  JPCSecurityGroup:
+    Properties:
+      GroupDescription: !Sub Java Policy Controller Rules of Stack ${AWS::StackName}
+      SecurityGroupIngress:
+      - FromPort: '443'
+        IpProtocol: tcp
+        SourceSecurityGroupId: !GetAtt JPCLBSecurityGroup.GroupId
+        ToPort: '443'
+      - FromPort: '58080'
+        IpProtocol: tcp
+        SourceSecurityGroupId: !GetAtt JPCLBSecurityGroup.GroupId
+        ToPort: '58080'
+      VpcId: !Ref VpcId
+    Type: AWS::EC2::SecurityGroup
+  ControlCenterSecurityGroup:
+    Properties:
+      GroupDescription: !Sub Control Center Web Rules of Stack ${AWS::StackName}
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: '1443'
+        IpProtocol: tcp
+        ToPort: '1443'
+      - CidrIp: 0.0.0.0/0
+        FromPort: '443'
+        IpProtocol: tcp
+        ToPort: '443'
+      - CidrIp: 0.0.0.0/0
+        FromPort: '8443'
+        IpProtocol: tcp
+        ToPort: '8443'
+      VpcId: !Ref VpcId
+    Type: AWS::EC2::SecurityGroup
+    
+  RDSInboundRule1433:
+    DependsOn:
+    - ControlCenterSecurityGroup
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: "sg-0f59af5716947e0c4"
+      FromPort: '1433'
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt ControlCenterSecurityGroup.GroupId
+      ToPort: '1433'
+
+  RDSInboundRule5432:
+    DependsOn:
+    - ControlCenterSecurityGroup
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: "sg-0f59af5716947e0c4"
+      FromPort: '5432'
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt ControlCenterSecurityGroup.GroupId
+      ToPort: '5432'
+
+  RDSInboundRule1521:
+    DependsOn:
+    - ControlCenterSecurityGroup
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: "sg-0f59af5716947e0c4"
+      FromPort: '1521'
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt ControlCenterSecurityGroup.GroupId
+      ToPort: '1521'      
+    
+  EFSSecurityGroup:
+    DependsOn:
+    - ControlCenterSecurityGroup
+    Properties:
+      GroupDescription: !Sub EFS Rules of Stack ${AWS::StackName}
+      SecurityGroupIngress:
+      - FromPort: '2049'
+        IpProtocol: tcp
+        SourceSecurityGroupId: !GetAtt ControlCenterSecurityGroup.GroupId
+        ToPort: '2049'
+      VpcId: !Ref VpcId
+    Type: AWS::EC2::SecurityGroup
+    
+  ServerIAMRole: 
+    Properties:
+      AssumeRolePolicyDocument: {
+        "Statement": [
+          {
+            "Action": [
+              "sts:AssumeRole"
+            ],
+            "Effect": "Allow",
+            "Principal": {
+              "Service": [
+                "ec2.amazonaws.com"
+              ]
+            }
+          }
+        ],
+        "Version": "2012-10-17"
+      }
+      Path: "/nextlabs_platform/"
+      Policies: [
+        {
+          "PolicyDocument": {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "logs:CreateLogGroup",
+                  "logs:CreateLogStream",
+                  "logs:PutLogEvents",
+                  "logs:DescribeLogStreams"
+                ],
+                "Resource": [
+                  "arn:aws:logs:*:*:*"
+                ]
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "cloudwatch:PutMetricData"
+                ],
+                "Resource": ["*"]
+              }
+            ]
+          },
+          "PolicyName": "AllowPushCustomCloudwatchLog"
+        }
+      ]
+    Type: AWS::IAM::Role
+  ServerInstanceProfile:
+    Properties:
+      Path: "/nextlabs_platform/"
+      Roles:
+      - Ref: ServerIAMRole
+    Type: AWS::IAM::InstanceProfile
+  ControlCenterEFS:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        EFSVPCSecurityGroupID: !GetAtt EFSSecurityGroup.GroupId
+        EC2SubnetID: !Select [0, !Ref EC2SubnetIDs] 
+      TemplateURL: https://s3.amazonaws.com/cf-templates-nextlabs/platform/latest/rds-consolidated-templates/efs.yaml
+  ControlCenterInstance:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+    - ControlCenterSecurityGroup
+    - ControlCenterEFS
+    Properties:
+      Parameters:
+        AdminPassword: !Ref AdminPassword
+        APIUser: !Ref APIUser
+        APIUserPassword: !Ref APIUserPassword
+        CCAdministratorEmail: !Ref CCAdministratorEmail
+        CCInstallerS3Url: !Ref CCInstallerS3Url
+        ControlCenterInstanceType: !Ref ControlCenterInstanceType
+        ControlCenterHostname: !Ref ControlCenterHostname
+        CCVPCSecurityGroupID: !GetAtt ControlCenterSecurityGroup.GroupId
+        CCSamplePolicyS3Url: !Ref CCSamplePolicyS3Url
+        DBMasterName: !Ref DBMasterName
+        DBMasterUserPassword: !Ref DBMasterUserPassword
+        DBMasterUsername: !Ref DBMasterUsername
+        DBControlCenterPassword: !Ref DBControlCenterPassword
+        DBControlCenterUsername: !Ref DBControlCenterUsername
+        DNSDomain: !Ref DNSDomain
+        DBControlCenterName: !Ref DBControlCenterName
+        EC2SubnetID: !Select [0, !Ref EC2SubnetIDs]
+        HeartbeatIntervalInMinutes: !Ref HeartbeatIntervalInMinutes
+        ControlCenterJVMMX: !Ref ControlCenterJVMMX
+        ControlCenterStorageType: !Ref ControlCenterStorageType
+        ControlCenterAllocatedStorage: !Ref ControlCenterAllocatedStorage
+        ControlCenterIops: !Ref ControlCenterIops
+        KeyPairName: !Ref KeyPairName
+        KeystorePassword: !Ref KeystorePassword
+        LicenseInfo: !Ref LicenseInfo
+        LicenseS3Url: !Ref LicenseS3Url
+        MailServerFrom: !Ref MailServerFrom
+        MailServerPasssord: !Ref MailServerPasssord
+        MailServerPort: !Ref MailServerPort
+        MailServerSSL: !Ref MailServerSSL
+        MailServerTo: !Ref MailServerTo
+        MailServerURL: !Ref MailServerURL
+        MailServerUsername: !Ref MailServerUsername
+        S3AccessKeyID: AKIAIHIMVFRHPGPZPFGQ
+        S3SecretAccessKey: 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
+        SSLCertPassword: !Ref SSLCertPassword
+        EFSFileSystem: !GetAtt ControlCenterEFS.Outputs.FileSystemID
+        ServerInstanceProfile: !Ref ServerInstanceProfile
+        Oauth2JWTSecretPluginS3Url: !Ref Oauth2JWTSecretPluginS3Url
+      TemplateURL: !FindInMap [CCTemplate, !Ref RDSType, id]
+  CCLoadBalancer:
+    Properties:
+      ConnectionSettings:
+        IdleTimeout: 3600
+      CrossZone: true
+      Instances:
+      - !GetAtt ControlCenterInstance.Outputs.InstanceRef
+      Listeners:
+      - InstancePort: '1443'
+        InstanceProtocol: HTTPS
+        LoadBalancerPort: '443'
+        Protocol: HTTPS
+        SSLCertificateId: !Ref SSLCertificateId
+      - InstancePort: '8443'
+        InstanceProtocol: TCP
+        LoadBalancerPort: '8443'
+        Protocol: TCP
+      Scheme: internet-facing
+      SecurityGroups:
+      - Ref: ControlCenterLBSecurityGroup
+      Subnets: !Ref EC2SubnetIDs
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+  CCRoute53EntryPrivate:
+    Properties:
+      HostedZoneId: !Ref Route53PrivateHostedZone
+      Name: !Sub ${ControlCenterInstance.Outputs.DnsName}.
+      ResourceRecords:
+      - !GetAtt ControlCenterInstance.Outputs.PrivateIp
+      TTL: 300
+      Type: A
+    Type: AWS::Route53::RecordSet
+  CCLBRoute53EntryPublic:
+    Properties:
+      HostedZoneId: !Ref Route53PublicHostedZone
+      Name: !Sub ${ControlCenterInstance.Outputs.DnsName}.
+      ResourceRecords:
+      - !Sub ${CCLoadBalancer.CanonicalHostedZoneName}.
+      Type: CNAME
+      TTL: 60
+    Type: AWS::Route53::RecordSet
+  ICENETs:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: ControlCenterInstance
+    Properties:
+      Parameters:
+        CCInstallerS3Url: !Ref CCInstallerS3Url
+        CCVPCSecurityGroupID: !GetAtt ControlCenterSecurityGroup.GroupId
+        ControlCenterHost: !GetAtt ControlCenterInstance.Outputs.DnsName
+        EC2SubnetIDs: !Select [0, !Ref EC2SubnetIDs]
+        EFSFileSystem: !GetAtt ControlCenterEFS.Outputs.FileSystemID
+        ICENETDesiredCapacity: !Ref ICENETDesiredCapacity
+        ICENETInstanceType: !Ref ICENETInstanceType
+        ICENETJvmMX: !Ref ICENETJvmMX
+        ICENETStorageType: !Ref ICENETStorageType
+        ICENETAllocatedStorage: !Ref ICENETAllocatedStorage
+        ICENETIops: !Ref ICENETIops
+        KeyPairName: !Ref KeyPairName
+        LicenseS3Url: !Ref LicenseS3Url
+        Oauth2JWTSecretPluginS3Url: !Ref Oauth2JWTSecretPluginS3Url
+        S3AccessKeyID: AKIAIHIMVFRHPGPZPFGQ
+        S3SecretAccessKey: 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
+        SSLCertPassword: !Ref SSLCertPassword
+        ServerInstanceProfile: !Ref ServerInstanceProfile
+      TemplateURL: https://s3.amazonaws.com/cf-templates-nextlabs/platform/latest/rds-consolidated-templates/icenet.yaml
+  JPCStack:
+    DependsOn:
+    - JPCSecurityGroup
+    - ControlCenterInstance
+    Properties:
+      Parameters:
+        ControlCenterHost: !GetAtt ControlCenterInstance.Outputs.DnsName
+        DNSDomain: !Ref DNSDomain
+        EC2SubnetIDs: !Join [',', !Ref EC2SubnetIDs]
+        JPCInstallerS3Url: !Ref JPCInstallerS3Url
+        JPCDesiredCapacity: !Ref JPCDesiredCapacity
+        JavaPolicyControllerInstanceType: !Ref JavaPolicyControllerInstanceType
+        JPCHostname: !Ref JPCHostname
+        JPCVPCSecurityGroupID: !GetAtt JPCSecurityGroup.GroupId
+        JavaPolicyControllerStorageType: !Ref JavaPolicyControllerStorageType
+        JavaPolicyControllerAllocatedStorage: !Ref JavaPolicyControllerAllocatedStorage
+        JavaPolicyControllerIops: !Ref JavaPolicyControllerIops
+        KeyPairName: !Ref KeyPairName
+        Oauth2JWTSecretPluginS3Url: !Ref Oauth2JWTSecretPluginS3Url
+        S3AccessKeyID: AKIAIHIMVFRHPGPZPFGQ
+        S3SecretAccessKey: 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
+        VpcId: !Ref VpcId
+      TemplateURL: https://s3.amazonaws.com/cf-templates-nextlabs/platform/latest/rds-consolidated-templates/jpc.yaml
+      TimeoutInMinutes: '10'
+    Type: AWS::CloudFormation::Stack
+  JPCLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internet-facing
+      Subnets: !Ref EC2SubnetIDs
+      LoadBalancerAttributes:
+      - Key: idle_timeout.timeout_seconds
+        Value: '50'
+      SecurityGroups:
+      - !Ref JPCLBSecurityGroup
+  JPCListener:
+    Type : AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Certificates:
+      - CertificateArn: !Ref SSLCertificateId
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn: !GetAtt JPCStack.Outputs.JPCEvalTargetGroup
+      LoadBalancerArn: !Ref JPCLoadBalancer
+      Port: 443
+      Protocol: HTTPS
+  JPCOuthListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+      - Type: forward
+        TargetGroupArn: !GetAtt JPCStack.Outputs.JPCOauthTargetGroup
+      Conditions:
+      - Field: path-pattern
+        Values:
+        - "/oauth/*"
+      ListenerArn:
+        Ref: JPCListener
+      Priority: 1
+  JPCCasListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+      - Type: forward
+        TargetGroupArn: !GetAtt JPCStack.Outputs.JPCOauthTargetGroup
+      Conditions:
+      - Field: path-pattern
+        Values:
+        - "/cas/*"
+      ListenerArn:
+        Ref: JPCListener
+      Priority: 2
+  JPCLBRoute53EntryPrivate:
+    Properties:
+      HostedZoneId: !Ref Route53PrivateHostedZone
+      Name: !Sub ${JPCHostname}.${DNSDomain}.
+      ResourceRecords:
+      - !Sub ${JPCLoadBalancer.DNSName}.
+      Type: CNAME
+      TTL: 60
+    Type: AWS::Route53::RecordSet
+  JPCLBRoute53EntryPublic:
+    Properties:
+      HostedZoneId: !Ref Route53PublicHostedZone
+      Name: !Sub ${JPCHostname}.${DNSDomain}.
+      ResourceRecords:
+      - !Sub ${JPCLoadBalancer.DNSName}.
+      Type: CNAME
+      TTL: 60
+    Type: AWS::Route53::RecordSet
+Outputs:
+  HelpUrl:
+    Description: The URL of help system
+    Value: !Sub https://${ControlCenterHostname}.${DNSDomain}/help/CloudAzHelp.html
+  ConsoleURL:
+    Description: The URL of Control Center Console
+    Value: !Sub https://${ControlCenterHostname}.${DNSDomain}/console
+  JPCRestEndpoint:
+    Description: The Java Policy Controller Rest API URL
+    Value: !Sub https://${JPCHostname}.${DNSDomain}/dpc/authorization/pdp
+  PolicyManagementServer:
+    Description: The Policy Management Server is the machine where the Control Center
+      is installed, this value would need to be specified while connecting to policy
+      studio
+    Value: !Sub ${ControlCenterHostname}.${DNSDomain}:8443
+  ReporterURL:
+    Description: The URL where Reporter is installed
+    Value: !Sub https://${ControlCenterHostname}.${DNSDomain}/reporter

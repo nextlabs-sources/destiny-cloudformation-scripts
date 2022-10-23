@@ -1,0 +1,272 @@
+Description: Java Policy Controller Stack Template
+Mappings:
+  AWSRegionAmazAMI:
+    us-east-1:
+      id: ami-9de9fee2
+Parameters:
+  ControlCenterHost:
+    Description: The Control Center host to connect
+    Type: String
+  DNSDomain:
+    AllowedPattern: (?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\.)+[a-zA-Z]{2,63}$)
+    Description: The domain for the instance (the Route53 domain)
+    Type: String
+  EC2SubnetIDs:
+    Description: >
+      The Subnets inside which EC2 isntances will be created, must in the
+      VPC specified and you should specify at least 1 subnet and not more than the
+      nubmer of available zones in the region (recommend per subnet per available
+      zone)
+    Type: List<AWS::EC2::Subnet::Id>
+  JPCInstallerS3Url:
+    Description: The S3 url for Java Policy Controller installer
+    Type: String
+  JPCDesiredCapacity:
+    Description: Number of desired JPCs to be created
+    Type: String
+    Default: "1"
+  JavaPolicyControllerInstanceType:
+    Default: m4.large
+    Description: The instance type, such as t2.micro
+    Type: String
+  JPCHostname:
+    AllowedPattern: ([a-zA-Z0-9]|[a-zA-Z0-9])[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]
+    Description: >
+      The machine name given to the jpc instance, will be used to compose
+      the DNS name
+    Type: String
+  JPCVPCSecurityGroupID:
+    Description: The VPC Security Group to apply to the EC2 instance
+    Type: AWS::EC2::SecurityGroup::Id
+  JavaPolicyControllerStorageType:
+    Description: The storage type associated with this ec2 instance.
+    Type: String
+    AllowedValues:
+    - 'standard'
+    - 'gp2'
+    - 'io1'
+    Default: 'gp2'
+  JavaPolicyControllerAllocatedStorage:
+    Type: String
+    Description: The allocated storage size, specified in gigabytes (GB).
+    Default: '50'
+  JavaPolicyControllerIops:
+    Type: Number
+    Description: >
+      The number of I/O operations per second (IOPS) that the ec2 EBS provisions.
+      The value must be equal to or greater than 1000.
+      Specify only if you use io1 StorageType, and refer to AWS doc for allowed value
+    MinValue: 1000
+    MaxValue: 20000
+    Default: 1000
+  KeyPairName:
+    Description: The SSH Keypair you want to used to connect to EC2 instances
+    Type: AWS::EC2::KeyPair::KeyName
+  Oauth2JWTSecretPluginS3Url:
+    Description: The S3 url for Oauth2 JWT Secret Plugin
+    Type: String
+  S3AccessKeyID:
+    Description: The access key ID for accessing S3 file such as installer and license
+      file
+    Type: String
+  S3SecretAccessKey:
+    Description: The access key secret for accessing S3 file such as installer and
+      license file
+    NoEcho: true
+    Type: String
+  VpcId:
+    Description: The VPC where you want to create EC2 instances
+    Type: AWS::EC2::VPC::Id
+Conditions:
+  ProvisionedIOPS: !Equals [ !Ref JavaPolicyControllerStorageType, 'io1' ]
+Resources:
+  JPCLaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      AssociatePublicIpAddress: true
+      BlockDeviceMappings:
+      - DeviceName: /dev/xvda
+        Ebs:
+          DeleteOnTermination: true
+          VolumeSize: !Ref JavaPolicyControllerAllocatedStorage
+          VolumeType: !Ref JavaPolicyControllerStorageType
+          Iops: !If [ProvisionedIOPS, !Ref JavaPolicyControllerIops, !Ref "AWS::NoValue"]
+      ImageId: !FindInMap [AWSRegionAmazAMI, !Ref "AWS::Region", id]
+      InstanceType: !Ref JavaPolicyControllerInstanceType
+      KeyName: !Ref KeyPairName
+      SecurityGroups:
+      - !Ref JPCVPCSecurityGroupID
+      UserData:
+        Fn::Base64: !Sub |
+          #cloud-config
+          output: { all: "| tee -a /var/log/cloud-init-output.log" }
+          repo_update: true
+          repo_upgrade: all
+          packages:
+          - unzip
+          - httpd
+          - openssl-devel
+          - mod_ssl
+          write_files:
+          - path: /etc/httpd/conf.d/jpc.conf
+            owner: root:root
+            permissions: '0644'
+            content: |
+              <IfModule !mod_ssl.c>
+                LoadModule ssl_module modules/mod_ssl.so
+              </IfModule>
+
+              Listen 443 https
+              SSLPassPhraseDialog builtin
+              SSLSessionCache shmcb:/run/httpd/sslcache(512000)
+              SSLSessionCacheTimeout 300
+              SSLRandomSeed startup file:/dev/urandom  256
+              SSLRandomSeed connect builtin
+              SSLCryptoDevice builtin
+              SSLProtocol all -SSLv3
+              SSLProxyProtocol all -SSLv3
+              SSLHonorCipherOrder On
+              SSLCipherSuite ALL:!ADH:!EXP:!LOW:!RC2:!3DES:!SEED:!RC4:+HIGH:+MEDIUM
+
+              <VirtualHost *:443>
+                CustomLog logs/jpc.log combined
+                KeepAlive On
+                Servername ${JPCHostname}.${DNSDomain}
+                SSLEngine On
+                SSLProxyEngine On
+                ProxyRequests Off
+                SSLCertificateFile  /etc/httpd/ssl/server.crt
+                SSLCertificateKeyFile /etc/httpd/ssl/server.key
+
+                <Location /oauth/token>
+                  ProxyPass "https://${ControlCenterHost}/cas/token"
+                  ProxyPassReverse "https://${ControlCenterHost}/cas/token"
+                </Location>
+
+                <Location /cas/token>
+                  ProxyPass "https://${ControlCenterHost}/cas/token"
+                  ProxyPassReverse "https://${ControlCenterHost}/cas/token"
+                </Location>
+              </VirtualHost>
+          
+          runcmd:
+          - sudo service tomcat8 stop
+          - >-
+            sudo sed -i s/HOSTNAME=.*/HOSTNAME=$HOSTNAME-managed/ /etc/sysconfig/network &&
+            echo $HOSTNAME-managed > /etc/hostname &&
+            echo "127.0.0.1  $HOSTNAME-managed" >> /etc/hosts &&
+            hostname $HOSTNAME-managed
+          - mkdir -p /etc/httpd/ssl
+          - >-
+            rm -f /etc/httpd/conf.d/welcome.conf
+            /etc/httpd/conf.d/userdir.conf
+            /etc/httpd/conf.d/ssl.conf
+            /etc/httpd/conf.d/autoindex.conf
+          - >-
+            openssl req -x509 -nodes -days 3650 -newkey rsa:2048 
+            -subj "/C=US/ST=CA/L=San Mateo/O=NextLabs/OU=CompliantEnterprise/CN=${JPCHostname}.${DNSDomain}"
+            -keyout /etc/httpd/ssl/server.key
+            -out /etc/httpd/ssl/server.crt
+          - sudo chkconfig --level 345 httpd on
+          - sudo chkconfig --level 345 tomcat8 on
+          - >-
+            AWS_ACCESS_KEY_ID=${S3AccessKeyID} AWS_SECRET_ACCESS_KEY=${S3SecretAccessKey}
+            aws s3 cp "${JPCInstallerS3Url}" /tmp/PolicyControllerJava.zip
+          - sudo unzip -o -q /tmp/PolicyControllerJava.zip -d /usr/local
+          - sudo chmod +x /usr/local/Policy_Controller_Java/install.sh
+          - sudo mkdir -p /usr/share/tomcat8/nextlabs
+          - |
+            sudo cat > /usr/local/Policy_Controller_Java/jpc_properties.json <<EOF
+            {
+              "server_ip": "localhost",
+              "server_port": "8080",
+              "server_type": "TOMCAT",
+              "agent_type": "PORTAL",
+              "policy_controller_host": "jpc_host",
+              "policy_controller_port": "58443",
+              "cc_host": "${ControlCenterHost}",
+              "cc_port": "8443",
+              "drive_root_dir": "/dev/xvda1",
+              "installation_dir": "/usr/share/tomcat8/nextlabs",
+              "dpc_path": "/usr/share/tomcat8/nextlabs/dpc",
+              "jboss_installation_type": "standalone",
+              "temp_dir": "/tmp",
+              "required_disk_space_mb": "250",
+              "version_number": "8.0.4",
+              "built_date": "2017-01-16",
+              "disable_jwt_filter": false,
+              "enable_jwt_filter": true
+            }
+            EOF
+          - CATALINA_HOME=/usr/share/tomcat8 /usr/local/Policy_Controller_Java/install.sh -s
+          - echo CATALINA_OPTS=\"-Dnextlabs.dont.care.acceptable=true -Dnextlabs.error.result.acceptable=true -Djava.rmi.server.hostname=${JPCHostname}.${DNSDomain}\" >> /etc/tomcat8/tomcat8.conf
+          - >-
+            AWS_ACCESS_KEY_ID=${S3AccessKeyID} AWS_SECRET_ACCESS_KEY=${S3SecretAccessKey}
+            aws s3 cp "${Oauth2JWTSecretPluginS3Url}" /tmp/Oauth2JWTSecret-Plugin.zip
+          - sudo unzip -o -q /tmp/Oauth2JWTSecret-Plugin.zip -d /tmp/Oauth2JWTSecret-Plugin
+          - >-
+            sudo sed -i "s|jar-path.*|jar-path = /usr/share/tomcat8/nextlabs/dpc/jservice/jar/$(basename "$(find '/tmp/Oauth2JWTSecret-Plugin/Policy Controller' -type f -name *.jar)")|"
+            "$(find '/tmp/Oauth2JWTSecret-Plugin/Policy Controller' -type f -name *.properties)"
+          - sudo find "/tmp/Oauth2JWTSecret-Plugin/Policy Controller" -type f -name "*.properties" -exec cp "{}" /usr/share/tomcat8/nextlabs/dpc/jservice/config/ \;
+          - sudo find "/tmp/Oauth2JWTSecret-Plugin/Policy Controller" -type f -name "*.jar" -exec cp "{}" /usr/share/tomcat8/nextlabs/dpc/jservice/jar/ \;
+          - sudo service tomcat8 start
+          - service httpd start
+  JPCOauthTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 443
+      Protocol: HTTPS
+      HealthCheckProtocol: HTTP
+      HealthCheckPort: 58080
+      HealthCheckPath: /dpc/authorization/pdp
+      VpcId: !Ref VpcId
+  JPCEvalTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 58080
+      Protocol: HTTP
+      HealthCheckProtocol: HTTP
+      HealthCheckPort: 58080
+      HealthCheckPath: /dpc/authorization/pdp
+      VpcId: !Ref VpcId
+  JPCAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier: !Ref EC2SubnetIDs
+      HealthCheckType: "EC2"
+      LaunchConfigurationName: !Ref JPCLaunchConfiguration
+      TargetGroupARNs:
+      - !Ref JPCOauthTargetGroup
+      - !Ref JPCEvalTargetGroup
+      DesiredCapacity: !Ref JPCDesiredCapacity
+      MaxSize: !Ref JPCDesiredCapacity
+      MinSize: !Ref JPCDesiredCapacity
+      Tags:
+      - Key: "Name"
+        Value: !Sub ${AWS::StackName}-JPC
+        PropagateAtLaunch: true
+      - Key: "Owner"
+        Value: "keng@nextlabs.com"
+        PropagateAtLaunch: true
+      - Key: "Project"
+        Value: "CloudAz"
+        PropagateAtLaunch: true
+      - Key: "Region"
+        Value: "sgdc"
+        PropagateAtLaunch: true
+      - Key: "TTL Shutdown Time"
+        Value: "24"
+        PropagateAtLaunch: true
+      - Key: "TTL Start Time"
+        Value: "24"
+        PropagateAtLaunch: true
+      - Key: "Purpose"
+        Value: "CloudAz"
+        PropagateAtLaunch: true
+Outputs:
+  JPCOauthTargetGroup:
+    Description: Target Group listen on HTTPS 443 for oauth request
+    Value: !Ref JPCOauthTargetGroup
+  JPCEvalTargetGroup:
+    Description: Target Group listen on HTTP 58080 for PDP REST API
+    Value: !Ref JPCEvalTargetGroup

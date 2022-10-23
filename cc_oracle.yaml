@@ -1,0 +1,528 @@
+Description: Control Center Server (using ORACLE RDS) Template
+Mappings:
+  AWSRegionAmazAMI:
+    ap-northeast-1:
+      id: ami-1a15c77b
+    ap-northeast-2:
+      id: ami-a04297ce
+    ap-south-1:
+      id: ami-cacbbea5
+    ap-southeast-1:
+      id: ami-7243e611
+    ap-southeast-2:
+      id: ami-55d4e436
+    eu-central-1:
+      id: ami-0044b96f
+    eu-west-1:
+      id: ami-d41d58a7
+    sa-east-1:
+      id: ami-b777e4db
+    us-east-1:
+      id: ami-c481fad3
+    us-west-1:
+      id: ami-de347abe
+    us-west-2:
+      id: ami-b04e92d0
+Parameters:
+  AdminPassword:
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    ConstraintDescription: Must at least has 8 characters
+    Description: Password for Control Center user admin access
+    MinLength: '8'
+    NoEcho: true
+    Type: String
+  APIUser:
+    Description: The API User to be created after CC is installed
+    Type: String
+    AllowedPattern: '[a-zA-Z]*'
+    MinLength: 2
+  APIUserPassword:
+    Description: The password for the API User to be created after CC is installed
+    Type: String
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    MinLength: 6
+    NoEcho: true
+  CCAdministratorEmail:
+    Description: Administrator's email address
+    Type: String
+    Default: in@val.id
+  CCInstallerS3Url:
+    Description: The S3 url for Control Center installer
+    Type: String
+  ControlCenterInstanceType:
+    Default: m4.large
+    Description: The instance type, such as t2.micro
+    Type: String
+  ControlCenterHostname:
+    AllowedPattern: ([a-zA-Z0-9]|[a-zA-Z0-9])[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]
+    Description: The machine name given to the instance, will be used to compose the DNS name
+    Type: String
+  ControlCenterJVMMX:
+    Default: '4096'
+    Description: The jvmmx parameter for Control Center's Tomcat
+    MinValue: '3072'
+    Type: Number
+  ControlCenterStorageType:
+    Description: The storage type associated with this ec2 instance.
+    Type: String
+    AllowedValues:
+    - 'standard'
+    - 'gp2'
+    - 'io1'
+    Default: 'gp2'
+  ControlCenterAllocatedStorage:
+    Type: String
+    Description: The allocated storage size, specified in gigabytes (GB).
+    Default: '50'
+  ControlCenterIops:
+    Type: Number
+    Description: >
+      The number of I/O operations per second (IOPS) that the ec2 EBS provisions.
+      The value must be equal to or greater than 1000.
+      Specify only if you use io1 StorageType, and refer to AWS doc for allowed value
+    MinValue: 1000
+    MaxValue: 20000
+    Default: 1000
+  CCSamplePolicyS3Url:
+    Description: The S3 url for policy sample file
+    Type: String
+  CCVPCSecurityGroupID:
+    Description: The VPC Security Group to apply to the EC2 instance
+    Type: AWS::EC2::SecurityGroup::Id
+  DBMasterName:
+    Description: The database name which master user authenticated against
+    Type: String
+  DBMasterUserPassword:
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    ConstraintDescription: Must at least has 8 characters
+    Description: Password for RDS database master user access
+    MinLength: '8'
+    NoEcho: true
+    Type: String
+  DBMasterUsername:
+    AllowedPattern: '[a-zA-Z]*'
+    ConstraintDescription: Must at least has 2 characters and only letters are allowed
+    Description: Master username for RDS database
+    MinLength: '2'
+    Type: String
+  DBControlCenterPassword:
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    ConstraintDescription: Must at least has 8 characters
+    Description: The password for the db user to be created
+    MinLength: '8'
+    NoEcho: true
+    Type: String
+  DBControlCenterUsername:
+    AllowedPattern: '[a-zA-Z][a-zA-Z_0-9]*[a-zA-Z0-9]'
+    ConstraintDescription: Must at least has 2 characters and only alphabets are allowed
+    Description: The database user to be created for cc server
+    MinLength: '2'
+    Type: String
+  DNSDomain:
+    AllowedPattern: (?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\.)+[a-zA-Z]{2,63}$)
+    Description: The domain for the instance (the Route53 domain)
+    Type: String
+  DBControlCenterName:
+    Description: No need to specify for ORACLE
+    Type: String
+  EC2SubnetID:
+    Description: The Subnet inside which EC2 isntances will be created, must in the VPC specified
+    Type: AWS::EC2::Subnet::Id
+  EFSFileSystem:
+    Description: The EFS filesystem ID for Control Center to store shared data (configuration, certificates, etc)
+    Type: String
+    AllowedPattern: '[A-Za-z\-0-9]*'
+  HeartbeatIntervalInMinutes:
+    Default: '5'
+    Description: The default heartbeat interval in minutes for Policy Controllers
+    Type: Number
+  KeyPairName:
+    Description: The SSH Keypair you want to used to connect to EC2 instances
+    Type: AWS::EC2::KeyPair::KeyName
+  KeystorePassword:
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    ConstraintDescription: Must at least has 6 characters
+    Description: The password required for accessing the Encryption Key Store for the Control Center server
+    MinLength: '6'
+    NoEcho: true
+    Type: String
+  LicenseS3Url:
+    Description: The S3 url for license file
+    Type: String
+  LicenseInfo:
+    Description: The license info String
+    Type: String
+    Default: '{"license_info":{"expiry_date":"01/31/2027","subcription_mode":"trial"},"pdp_info":[{"id":1,"host":"jpc1","memory":"1024MB","vcpu":1}]}"}'
+  MailServerFrom:
+    Description: The mail from email address
+    Default: ''
+    Type: String
+  MailServerPasssord:
+    Description: The mail server password
+    Default: ''
+    Type: String
+    NoEcho: true
+  MailServerPort:
+    Default: '25'
+    Description: The mail server smtp port
+    Type: Number
+  MailServerSSL:
+    AllowedValues:
+    - 'true'
+    - 'false'
+    Default: 'true'
+    Description: Whether the mail server is over ssl/tls
+    Type: String
+  MailServerTo:
+    Description: The mail server to email address
+    Default: ''
+    Type: String
+  MailServerURL:
+    Description: The mail server smtp host
+    Default: ''
+    Type: String
+  MailServerUsername:
+    Description: The mail server username
+    Default: ''
+    Type: String
+  Oauth2JWTSecretPluginS3Url:
+    Description: The S3 url for Oauth2 JWT Secret Plugin
+    Type: String
+  RDSInstanceEndpointAddress:
+    Description: Endpoint Address for RDS Instance
+    Type: String
+  S3AccessKeyID:
+    Description: The access key ID for accessing S3 file such as installer and license file
+    Type: String
+  S3SecretAccessKey:
+    Description: The access key secret for accessing S3 file such as installer and license file
+    NoEcho: true
+    Type: String
+  ServerInstanceProfile:
+    Description: The physical ID of an instance profile
+    Type: String
+  SSLCertPassword:
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    ConstraintDescription: Must at least has 6 characters
+    Description: The SSL certificate password for the Control Center server
+    MinLength: 6
+    NoEcho: true
+    Type: String
+Conditions:
+  ProvisionedIOPS: !Equals [ !Ref ControlCenterStorageType, 'io1' ]
+Resources:
+  ControlCenterInstance:
+    Properties:
+      BlockDeviceMappings:
+      - DeviceName: /dev/xvda
+        Ebs:
+          DeleteOnTermination: true
+          VolumeSize: !Ref ControlCenterAllocatedStorage
+          VolumeType: !Ref ControlCenterStorageType
+          Iops: !If [ProvisionedIOPS, !Ref ControlCenterIops, !Ref "AWS::NoValue"]
+      ImageId: !FindInMap [AWSRegionAmazAMI, !Ref "AWS::Region", id]
+      Monitoring: true
+      IamInstanceProfile: !Ref ServerInstanceProfile
+      InstanceType: !Ref ControlCenterInstanceType
+      KeyName: !Ref KeyPairName
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: true
+        DeleteOnTermination: true
+        DeviceIndex: '0'
+        GroupSet:
+        - Ref: CCVPCSecurityGroupID
+        SubnetId: !Ref EC2SubnetID
+      Tags:
+      - Key: Name
+        Value: !Join [" ", [!Ref "AWS::StackName", "Control Center"]]
+      UserData:
+        Fn::Base64: !Sub |
+          #cloud-config
+          repo_update: true
+          repo_upgrade: all
+
+          packages:
+          - unzip
+          - nfs-utils
+          - nginx
+
+          write_files:
+          - path: /opt/post_controlcenter_stat.sh
+            owner: root:root
+            permissions: '0755'
+            content: |
+              #!/bin/bash
+              LOGQUEUE_DIR='/opt/nextlabs/PolicyServer/server/logqueue'
+              CW_JSON_OPEN='{ "Namespace": "ControlCenter", "MetricData": [ '
+              CW_JSON_CLOSE=' ] }'
+              SIZE_METRIC_NAME='LogqueueSize'
+              COUNT_METRIC_NAME='LogQueueCount'
+              INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+              SIZE_METRIC_VALUE=$(find $LOGQUEUE_DIR -type f -print0 | du -scb --files0-from=- | tail -n 1 | cut -f1)
+              COUNT_METRIC_VALUE=$(find /opt/nextlabs/PolicyServer/server/logqueue -type f | wc -l)
+              SIZE_CW_JSON_METRIC="{ \"MetricName\": \"$SIZE_METRIC_NAME\", \"Dimensions\": [{\"Name\": \"InstanceId\", \"Value\": \"$INSTANCE_ID\"} ], \"Value\": $SIZE_METRIC_VALUE, \"Unit\": \"Bytes\" }"
+              COUNT_CW_JSON_METRIC="{ \"MetricName\": \"$COUNT_METRIC_NAME\", \"Dimensions\": [{\"Name\": \"InstanceId\", \"Value\": \"$INSTANCE_ID\"} ], \"Value\": $COUNT_METRIC_VALUE, \"Unit\": \"Count\" }"
+              aws cloudwatch put-metric-data --region ${AWS::Region} --cli-input-json "`echo $CW_JSON_OPEN $SIZE_CW_JSON_METRIC $CW_JSON_CLOSE`"
+              aws cloudwatch put-metric-data --region ${AWS::Region} --cli-input-json "`echo $CW_JSON_OPEN $COUNT_CW_JSON_METRIC $CW_JSON_CLOSE`"
+          - path: /opt/crontab
+            owner: root:root
+            permissions: '0644'
+            content: "* * * * * /opt/post_controlcenter_stat.sh > /dev/null 2>&1\n"
+          - path: /tmp/createAPIUserSecret.sql
+            owner: root:root
+            permissions: '0644'
+            content: |
+              INSERT INTO APP_USER_PROPERTIES (ID,VERSION,DATA_TYPE,PROP_KEY,USER_ID,PROP_VALUE) VALUES (10000,0,'STRING','jwt_passphrase',10000, 'JWTSECRET');
+          runcmd:
+          - sed -i s/HOSTNAME=.*/HOSTNAME=${ControlCenterHostname}.${DNSDomain}/ /etc/sysconfig/network
+          - echo ${ControlCenterHostname}.${DNSDomain} > /etc/hostname
+          - echo "127.0.0.1  ${ControlCenterHostname}.${DNSDomain} ${ControlCenterHostname}" >> /etc/hosts
+          - hostname ${ControlCenterHostname}.${DNSDomain}
+          - >-
+            AWS_ACCESS_KEY_ID=${S3AccessKeyID} AWS_SECRET_ACCESS_KEY=${S3SecretAccessKey}
+            aws s3 cp s3://nxexternal/oracle-instantclient12.1-basic-12.1.0.2.0-1.x86_64.rpm /tmp/
+          - >-
+            AWS_ACCESS_KEY_ID=${S3AccessKeyID} AWS_SECRET_ACCESS_KEY=${S3SecretAccessKey}
+            aws s3 cp s3://nxexternal/oracle-instantclient12.1-sqlplus-12.1.0.2.0-1.x86_64.rpm /tmp/
+          - rpm -i /tmp/oracle-instantclient12.1-basic-12.1.0.2.0-1.x86_64.rpm
+          - rpm -i /tmp/oracle-instantclient12.1-sqlplus-12.1.0.2.0-1.x86_64.rpm
+          - rm -f /tmp/oracle-instantclient12.1-basic-12.1.0.2.0-1.x86_64.rpm /tmp/oracle-instantclient12.1-sqlplus-12.1.0.2.0-1.x86_64.rpm
+          - >
+            LD_LIBRARY_PATH=/usr/lib/oracle/12.1/client64/lib
+            /usr/lib/oracle/12.1/client64/bin/sqlplus -S ${DBMasterUsername}/${DBMasterUserPassword}@'(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST="${RDSInstanceEndpointAddress}")(PORT=1521))(CONNECT_DATA=(SERVICE_NAME="${DBMasterName}")))' <<EOF
+
+            set heading off
+
+            set feedback off
+
+            WHENEVER OSERROR EXIT 9;
+
+            WHENEVER SQLERROR EXIT SQL.SQLCODE;
+
+            CREATE USER ${DBControlCenterUsername} IDENTIFIED BY "${DBControlCenterPassword}";
+
+            GRANT resource,connect to ${DBControlCenterUsername};
+
+            GRANT create view to ${DBControlCenterUsername};
+
+            ALTER USER ${DBControlCenterUsername} quota unlimited on USERS;
+
+            EOF
+
+          - rm -f /tmp/createdb.sql
+          - sed -i 's/ZONE=.*/ZONE="PST8PDT"/' /etc/sysconfig/clock
+          - ln -sf /usr/share/zoneinfo/PST8PDT /etc/localtime
+          - >-
+            AWS_ACCESS_KEY_ID=${S3AccessKeyID} AWS_SECRET_ACCESS_KEY=${S3SecretAccessKey}
+            aws s3 cp ${CCInstallerS3Url} /tmp/ControlCenter.zip
+          - >-
+            AWS_ACCESS_KEY_ID=${S3AccessKeyID} AWS_SECRET_ACCESS_KEY=${S3SecretAccessKey}
+            aws s3 cp ${LicenseS3Url} /usr/local/license.dat
+          - unzip -o -q /tmp/ControlCenter.zip -d /usr/local
+          - chmod +x /usr/local/PolicyServer/install.sh
+          - |
+            cat > /usr/local/PolicyServer/cc_properties.json <<EOF
+            {
+              "installation_dir": "/opt/nextlabs",
+              "installation_mode": "install",
+              "console_install_mode": "SAAS",
+              "web_service_port": "8443",
+              "web_application_port": "443",
+              "admin_user_password": "${AdminPassword}",
+              "ssl_certificate_password": "${SSLCertPassword}",
+              "key_store_password": "${KeystorePassword}",
+              "dms_component": "ON",
+              "dac_component": "ON",
+              "dps_component": "ON",
+              "dem_component": "ON",
+              "ddac_component": "ON",
+              "admin_component": "ON",
+              "reporter_component": "ON",
+              "dabs_component": "ON",
+              "dkms_component": "ON",
+              "cc_console_component": "ON",
+              "installation_type": "complete",
+              "ad_domain_name": "",
+              "ad_domain_controller": "",
+              "ad_domain_port": null,
+              "ad_base_DN": null,
+              "ad_username": null,
+              "ad_password": null,
+              "database_type": "ORACLE",
+              "db_connection_url": "oracle:thin:@${RDSInstanceEndpointAddress}:1521/${DBMasterName}",
+              "db_username": "${DBControlCenterUsername}",
+              "db_password": "${DBControlCenterPassword}",
+              "mail_server_url": "${MailServerURL}",
+              "mail_server_port": "${MailServerPort}",
+              "mail_server_username": "${MailServerUsername}",
+              "mail_server_password": "${MailServerPasssord}",
+              "mail_server_from": "${MailServerFrom}",
+              "mail_server_to": "${MailServerTo}",
+              "mail_server_ssl": "${MailServerSSL}",
+              "skip_ad_check": false,
+              "skip_smtp_check": true,
+              "server": {
+                "jvmms": 2048,
+                "jvmmx": ${ControlCenterJVMMX}
+              },
+              "license_file_location": "/usr/local/license.dat"
+            }
+            EOF
+          - /usr/local/PolicyServer/install.sh -s
+          - >-
+            LD_LIBRARY_PATH=/usr/lib/oracle/12.1/client64/lib
+            /usr/lib/oracle/12.1/client64/bin/sqlplus -S ${DBControlCenterUsername}/${DBControlCenterPassword}@'(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST="${RDSInstanceEndpointAddress}")(PORT=1521))(CONNECT_DATA=(SERVICE_NAME="${DBMasterName}")))' <<EOF
+
+            set heading off
+
+            set feedback off
+            
+            WHENEVER OSERROR EXIT 9;
+            
+            WHENEVER SQLERROR EXIT SQL.SQLCODE;
+            
+            UPDATE comm_profile SET heart_beat_freq_time_unit='minutes', heart_beat_freq_time=${HeartbeatIntervalInMinutes} WHERE agent_type IN ('DESKTOP', 'FILE_SERVER', 'PORTAL');
+          
+            EOF
+
+          - >-
+            /opt/nextlabs/PolicyServer/java/bin/java -jar /opt/nextlabs/PolicyServer/tools/crypt/crypt.jar
+            -w '${LicenseInfo}' > /opt/nextlabs/PolicyServer/server/license/sys_info.dat
+          - >-
+            LD_LIBRARY_PATH=/usr/lib/oracle/12.1/client64/lib
+            /usr/lib/oracle/12.1/client64/bin/sqlplus -S ${DBControlCenterUsername}/${DBControlCenterPassword}@'(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST="${RDSInstanceEndpointAddress}")(PORT=1521))(CONNECT_DATA=(SERVICE_NAME="${DBMasterName}")))' <<EOF
+
+            set heading off
+
+            set feedback off
+            
+            WHENEVER OSERROR EXIT 9;
+            
+            WHENEVER SQLERROR EXIT SQL.SQLCODE;
+            
+            UPDATE super_application_user SET email='${CCAdministratorEmail}' WHERE username = 'Administrator';
+            
+            EOF
+
+          - >-
+            AWS_ACCESS_KEY_ID=${S3AccessKeyID} AWS_SECRET_ACCESS_KEY=${S3SecretAccessKey}
+            aws s3 cp ${CCSamplePolicyS3Url} /opt/nextlabs/PolicyServer/server/resources/help/
+          - rm -rf /tmp/ControlCenter.zip /usr/local/PolicyServer
+          - mkdir /mnt/efs
+          - >-
+            echo "$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone).${EFSFileSystem}.efs.${AWS::Region}.amazonaws.com:/ /mnt/efs 
+            nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" >> /etc/fstab
+          - mount /mnt/efs
+          - mkdir -p /mnt/efs/control_center
+          - mkdir -p /mnt/efs/control_center/certificates /mnt/efs/control_center/configuration
+          - rm -rf /mnt/efs/control_center/certificates/*
+          - rm -rf /mnt/efs/control_center/configuration/*
+          - cp -rf /opt/nextlabs/PolicyServer/server/configuration/* /mnt/efs/control_center/configuration/
+          - cp -rf /opt/nextlabs/PolicyServer/server/certificates/* /mnt/efs/control_center/certificates/
+          - rm -rf /opt/nextlabs/PolicyServer/server/configuration
+          - rm -rf /opt/nextlabs/PolicyServer/server/certificates
+          - chmod -R 777 /mnt/efs/control_center
+          - ln -s /mnt/efs/control_center/certificates /opt/nextlabs/PolicyServer/server/certificates
+          - ln -s /mnt/efs/control_center/configuration /opt/nextlabs/PolicyServer/server/configuration
+          - crontab /opt/crontab
+          - >-
+            AWS_ACCESS_KEY_ID=${S3AccessKeyID} AWS_SECRET_ACCESS_KEY=${S3SecretAccessKey}
+            aws s3 cp ${Oauth2JWTSecretPluginS3Url} /tmp/Oauth2JWTSecret-Plugin.zip
+          - unzip -o -q /tmp/Oauth2JWTSecret-Plugin.zip -d /tmp/Oauth2JWTSecret-Plugin
+          - mkdir -p /opt/nextlabs/PolicyServer/server/plugins/jar /opt/nextlabs/PolicyServer/server/plugins/config
+          - find "/tmp/Oauth2JWTSecret-Plugin/Control Center" -type f -name "*.properties" -exec cp "{}" /opt/nextlabs/PolicyServer/server/plugins/config \;
+          - find "/tmp/Oauth2JWTSecret-Plugin/Control Center" -type f -name "*.jar" -exec cp "{}" /opt/nextlabs/PolicyServer/server/plugins/jar/ \;
+          - rm -rf /tmp/Oauth2JWTSecret-Plugin.zip /tmp/Oauth2JWTSecret-Plugin
+          - >-
+            LD_LIBRARY_PATH=/usr/lib/oracle/12.1/client64/lib
+            /usr/lib/oracle/12.1/client64/bin/sqlplus -S ${DBControlCenterUsername}/${DBControlCenterPassword}@'(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST="${RDSInstanceEndpointAddress}")(PORT=1521))(CONNECT_DATA=(SERVICE_NAME="${DBMasterName}")))' <<EOF
+
+            set heading off
+
+            set feedback off
+            
+            WHENEVER OSERROR EXIT 9;
+            
+            WHENEVER SQLERROR EXIT SQL.SQLCODE;
+            
+            INSERT INTO APPLICATION_USER(ID,USER_TYPE,USERNAME,FIRST_NAME,LAST_NAME,STATUS,VERSION,DOMAIN_ID,PASSWORD,LAST_UPDATED_BY,CREATED_BY,DISPLAYNAME,HIDE_SPLASH,AUTH_HANDLER_ID)
+            VALUES (10000,'internal','${APIUser}','api','client','ACTIVE',0,11,HEXTORAW(standard_hash('${APIUserPassword}', 'MD5')),0,0,'api client',1,0);
+                        
+            EOF
+            
+          - sed -i "s|JWTSECRET|$(openssl rand -base64 32)|" /tmp/createAPIUserSecret.sql
+          - >-
+            echo exit | LD_LIBRARY_PATH=/usr/lib/oracle/12.1/client64/lib
+            /usr/lib/oracle/12.1/client64/bin/sqlplus -S ${DBControlCenterUsername}/${DBControlCenterPassword}@'(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST="${RDSInstanceEndpointAddress}")(PORT=1521))(CONNECT_DATA=(SERVICE_NAME="${DBMasterName}")))' @/tmp/createAPIUserSecret.sql
+          - >-
+            LD_LIBRARY_PATH=/usr/lib/oracle/12.1/client64/lib
+            /usr/lib/oracle/12.1/client64/bin/sqlplus -S ${DBControlCenterUsername}/${DBControlCenterPassword}@'(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST="${RDSInstanceEndpointAddress}")(PORT=1521))(CONNECT_DATA=(SERVICE_NAME="${DBMasterName}")))' <<EOF
+
+            set heading off
+            
+            set feedback off
+            
+            WHENEVER OSERROR EXIT 9;
+            
+            WHENEVER SQLERROR EXIT SQL.SQLCODE;
+            
+            UPDATE application_user SET initlogin_done = 'Y' WHERE username = 'apiclient';
+
+            EOF
+
+          - service CompliantEnterpriseServer start
+          - >-
+            openssl req -x509 -nodes -days 3650 -newkey rsa:2048 
+            -subj "/C=US/ST=CA/L=San Mateo/O=NextLabs/OU=CompliantEnterprise/CN=${ControlCenterHostname}.${DNSDomain}"
+            -keyout /etc/nginx/server.key
+            -out /etc/nginx/server.crt
+          - chmod 600 /etc/nginx/server.crt
+          - chmod 600 /etc/nginx/server.key
+          - rm -rf /etc/nginx/conf.d/*
+          - |
+            cat > /etc/nginx/conf.d/cc.conf <<EOF
+            server {
+              listen 1443;
+              server_name _;
+              ssl_certificate           /etc/nginx/server.crt;
+              ssl_certificate_key       /etc/nginx/server.key;
+              ssl on;
+              ssl_session_cache  builtin:1000  shared:SSL:10m;
+              ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;
+              ssl_ciphers HIGH:!aNULL:!eNULL:!EXPORT:!CAMELLIA:!DES:!MD5:!PSK:!RC4;
+              ssl_prefer_server_ciphers on;
+              
+              location /help {
+                proxy_pass http://cloudazhelpsystem.s3-website-us-west-2.amazonaws.com/production;
+              }
+              location /cas {
+                proxy_set_header Host \$host;
+                proxy_pass https://localhost/cas;
+              }
+              location /reporter {
+                proxy_set_header Host \$host;
+                proxy_pass https://localhost/reporter;
+              }
+              location /console {
+                proxy_set_header Host \$host;
+                proxy_pass https://localhost/console;
+              }
+              proxy_connect_timeout       600;
+              proxy_send_timeout          600;
+              proxy_read_timeout          600;
+              send_timeout                600;
+            }
+            EOF
+          - chkconfig --level 345 nginx on
+          - service nginx start
+    Type: AWS::EC2::Instance
+Outputs:
+  DnsName:
+    Description: The DnsName of the instance
+    Value: !Sub ${ControlCenterHostname}.${DNSDomain}
+  InstanceRef:
+    Description: The EC2 instance's instance-ID
+    Value: !Ref ControlCenterInstance
+  PrivateIp:
+    Description: The private IP of the instance
+    Value: !GetAtt ControlCenterInstance.PrivateIp

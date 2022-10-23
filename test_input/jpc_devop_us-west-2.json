@@ -1,0 +1,72 @@
+{
+  "StackName": "duan-platform-JPC",
+  "TemplateURL": "https://s3.amazonaws.com/cf-templates-nextlabs/platform/stable/jpc.yaml",
+  "Parameters": [
+    {
+      "ParameterKey": "ControlCenterHost",
+      "ParameterValue": "pf-cc.staging.cloudaz.net"
+    },
+    {
+      "ParameterKey": "DNSDomain",
+      "ParameterValue": "staging.cloudaz.net"
+    },
+    {
+      "ParameterKey": "EC2SubnetIDs",
+      "ParameterValue": "subnet-884970ec,subnet-1b3f6f6d,subnet-0be87d53"
+    },
+    {
+      "ParameterKey": "JPCInstallerS3Url",
+      "ParameterValue": "s3://nxtlbsrelease/Platform_SAAS/jpc/PolicyControllerJava-chef-8.0.4.999.zip"
+    },
+    {
+      "ParameterKey": "JPCDesiredCapacity",
+      "ParameterValue": "2"
+    },
+    {
+      "ParameterKey": "JavaPolicyControllerInstanceType",
+      "ParameterValue": "t2.micro"
+    },
+    {
+      "ParameterKey": "JPCHostname",
+      "ParameterValue": "pf-jpc"
+    },
+    {
+      "ParameterKey": "JPCVPCSecurityGroupID",
+      "ParameterValue": "sg-e0ca6598"
+    },
+    {
+      "ParameterKey": "KeyPairName",
+      "ParameterValue": "sgdc-dev"
+    },
+    {
+      "ParameterKey": "Oauth2JWTSecretPluginS3Url",
+      "ParameterValue": "s3://nxtlbsrelease/Platform_SAAS/Oauth2JWTSecret_Plugin/Oauth2JWTSecret-Plugin.zip"
+    },
+    {
+      "ParameterKey": "S3AccessKeyID",
+      "ParameterValue": "AKIAIHIMVFRHPGPZPFGQ"
+    },
+    {
+      "ParameterKey": "S3SecretAccessKey",
+      "ParameterValue": "/cmZ1lJNt7vQDd70NL2BqEM8L5EdVshYP5l+h8ey"
+    },
+    {
+      "ParameterKey": "VpcId",
+      "ParameterValue": "vpc-78998f1c"
+    }
+  ],
+  "Tags": [
+    {
+      "Key": "Owner",
+      "Value": "Duan Shiqiang"
+    },
+    {
+      "Key": "Purpose",
+      "Value": "RandD-Engr"
+    },
+    {
+      "Key": "Project",
+      "Value": "Platform"
+    }
+  ]
+}

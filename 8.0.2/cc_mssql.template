@@ -1,0 +1,451 @@
+{
+  "Description": "Control Center 8.0 Server only (using MSSQL RDS) Template",
+  "Parameters": {
+    "AdminPassword": {
+      "Description": "Password for Control Center user admin access",
+      "Type": "String",
+      "AllowedPattern": "[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*",
+      "MinLength": "8",
+      "ConstraintDescription": "Must at least has 8 characters",
+      "NoEcho": true
+    },
+    "DBMasterUsername": {
+      "Description": "Master username for RDS database",
+      "MinLength": "2",
+      "AllowedPattern": "[a-zA-Z]*",
+      "Type": "String",
+      "ConstraintDescription": "Must at least has 2 characters and only letters are allowed"
+    },
+    "DBMasterUserPassword": {
+      "Description": "Password for RDS database master user access",
+      "Type": "String",
+      "AllowedPattern": "[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*",
+      "MinLength": "8",
+      "ConstraintDescription": "Must at least has 8 characters",
+      "NoEcho": true
+    },
+    "DBAuthenticateDB": {
+      "Description": "Not used in this template, just ignore",
+      "Type": "String"
+    },
+    "DBUsername": {
+      "Description": "The database user to be created for cc server",
+      "MinLength": "2",
+      "AllowedPattern": "[a-zA-Z][a-zA-Z_0-9]*[a-zA-Z0-9]",
+      "Type": "String",
+      "ConstraintDescription": "Must at least has 2 characters and only alphabets are allowed"
+    },
+    "DBPassword": {
+      "Description": "The password for the db user to be created",
+      "MinLength": "8",
+      "AllowedPattern": "[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*",
+      "ConstraintDescription": "Must at least has 8 characters",
+      "Type": "String",
+      "NoEcho": true
+    },
+    "DatabaseName": {
+      "Description": "The database to be created for cc server",
+      "MinLength": "4",
+      "AllowedPattern": "[a-zA-z][a-zA-Z0-9_]*[a-zA-Z0-9]",
+      "Type": "String"
+    },
+    "RDSInstanceEndpointAddress": {
+      "Description": "Endpoint Address for RDS Instance",
+      "Type": "String"
+    },
+    "EC2SubnetID": {
+      "Description": "The Subnet inside which EC2 isntances will be created, must in the VPC specified",
+      "Type": "AWS::EC2::Subnet::Id"
+    },
+    "KeyPairName": {
+      "Description": "The SSH Keypair you want to used to connect to EC2 instances",
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+    "CCVPCSecurityGroupID": {
+      "Description": "The VPC Security Group to apply to the EC2 instance",
+      "Type": "AWS::EC2::SecurityGroup::Id"
+    },
+    "DNSDomain": {
+      "Description": "The domain for the instance (the Route53 domain)",
+      "Type": "String",
+      "AllowedPattern": "(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\\.)+[a-zA-Z]{2,63}$)"
+    },
+    "CCMachineName": {
+      "Description": "The machine name given to the instance, will be used to compose the DNS name",
+      "Type": "String",
+      "AllowedPattern": "([a-zA-Z0-9]|[a-zA-Z0-9])[a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9]"
+    },
+    "S3AccessKeyID": {
+      "Description": "The access key ID for accessing S3 file such as installer and license file",
+      "Type": "String"
+    },
+    "S3SecretAccessKey": {
+      "Description": "The access key secret for accessing S3 file such as installer and license file",
+      "Type": "String",
+      "NoEcho": true
+    },
+    "CCInstallerS3Url": {
+      "Description": "The S3 url for Control Center installer",
+      "Type": "String"
+    },
+    "LicenseS3Url": {
+      "Description": "The S3 url for license file",
+      "Type": "String"
+    },
+    "SSLCertPassword": {
+      "Description": "The SSL certificate password for the Control Center server",
+      "Type": "String",
+      "AllowedPattern": "[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*",
+      "MinLength": "6",
+      "ConstraintDescription": "Must at least has 6 characters",
+      "NoEcho": true
+    },
+    "KeystorePassword": {
+      "Description": "The password required for accessing the Encryption Key Store for the Control Center server",
+      "Type": "String",
+      "AllowedPattern": "[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*",
+      "MinLength": "6",
+      "ConstraintDescription": "Must at least has 6 characters",
+      "NoEcho": true
+    },
+    "HeartbeatIntervalInMinutes": {
+      "Description": "The default heartbeat interval in minutes for Policy Controllers",
+      "Type": "Number",
+      "Default": "5"
+    },
+    "MailServerURL": {
+      "Description": "The mail server smtp host",
+      "Type": "String"
+    },
+    "MailServerPort": {
+      "Description": "The mail server smtp port",
+      "Type": "Number",
+      "Default": "25"
+    },
+    "MailServerUsername": {
+      "Description": "The mail server username",
+      "Type": "String"
+    },
+    "MailServerPasssord": {
+      "Description": "The mail server password",
+      "Type": "String"
+    },
+    "MailServerFrom": {
+      "Description": "The mail from email address",
+      "Type": "String"
+    },
+    "MailServerTo": {
+      "Description": "The mail server to email address",
+      "Type": "String"
+    },
+    "MailServerSSL": {
+      "Description": "Whether the mail server is over ssl/tls",
+      "Type": "String",
+      "AllowedValues": ["true", "false"]
+    },
+    "CCInstanceType": {
+      "Description": "The instance type, such as t2.micro",
+      "Type": "String",
+      "Default": "m4.large"
+    },
+    "JvmMX": {
+      "Description": "The jvmmx parameter for Control Center's Tomcat",
+      "Type": "Number",
+      "MinValue": "3072",
+      "Default": "4096"
+    }
+  },
+  "Mappings": {
+    "AWSRegionAmazAMI": {
+      "us-east-1"      : {"id": "ami-c481fad3"},
+      "us-west-2"      : {"id": "ami-b04e92d0"},
+      "us-west-1"      : {"id": "ami-de347abe"},
+      "eu-west-1"      : {"id": "ami-d41d58a7"},
+      "eu-central-1"   : {"id": "ami-0044b96f"},
+      "ap-northeast-1" : {"id": "ami-1a15c77b"},
+      "ap-northeast-2" : {"id": "ami-a04297ce"},
+      "ap-southeast-1" : {"id": "ami-7243e611"},
+      "ap-southeast-2" : {"id": "ami-55d4e436"},
+      "sa-east-1"      : {"id": "ami-b777e4db"},
+      "ap-south-1"     : {"id": "ami-cacbbea5"}
+    }
+  },
+  "Resources": {
+    "ControlCenterInstance": {
+      "Type": "AWS::EC2::Instance",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "configSets": {"InstallAndRun": [
+            "CreateDatabase",
+            "ChangeHostname",
+            "InstallControlCenter"
+          ]},
+          "CreateDatabase": {
+            "packages": {
+              "yum": {
+                "freetds": []
+              }
+            },
+            "files": {
+              "/tmp/createdb.tsql": {
+                "content": {"Fn::Join": ["", [
+                  "USE master", "\n",
+                  "GO", "\n",
+                  "SET CONCAT_NULL_YIELDS_NULL ON", "\n",
+                  "SET ANSI_WARNINGS ON", "\n",
+                  "CREATE DATABASE ", {"Ref": "DatabaseName"}, "\n",
+                  "GO", "\n",
+                  "USE ", {"Ref": "DatabaseName"}, "\n",
+                  "GO", "\n",
+                  "CREATE LOGIN ", {"Ref": "DBUsername"}, " WITH PASSWORD = ", "'", {"Ref": "DBPassword"}, "'", "\n",
+                  "CREATE USER ", {"Ref": "DBUsername"}, " FOR LOGIN ", {"Ref": "DBUsername"}, " WITH DEFAULT_SCHEMA = dbo", "\n",
+                  "GO", "\n",
+                  "EXEC sp_addrolemember N'db_owner', N'", {"Ref": "DBUsername"}, "'", "\n",
+                  "GO", "\n",
+                  "exit", "\n"
+                ]]},
+                "mode": "000644"
+              }
+            },
+            "commands": {
+              "01_create_database_and_user": {
+                "command": {"Fn::Join": [" ", [
+                  "tsql",
+                  "-H", {"Ref": "RDSInstanceEndpointAddress"},
+                  "-p 1433",
+                  "-U $DBUSER",
+                  "-P $DBPASSWORD",
+                  "< /tmp/createdb.tsql"
+                ]]},
+                "env": {
+                  "DBUSER": {"Ref": "DBMasterUsername"},
+                  "DBPASSWORD": {"Ref": "DBMasterUserPassword"}
+                }
+              },
+              "02_delete_db_script": {
+                "command": "rm -f /tmp/createdb.tsql"
+              }
+            }
+          },
+          "ChangeHostname": {
+            "commands": {
+              "01_change_sysconfig_network_file": {
+                "command": {"Fn::Join": ["", [
+                  "sed -i s/HOSTNAME=.*/HOSTNAME=",
+                  {"Ref": "CCMachineName"}, ".", {"Ref": "DNSDomain"},
+                  "/ /etc/sysconfig/network && cat /etc/sysconfig/network"
+                ]]}
+              },
+              "02_change_ect_hostname_file": {
+                "command": {"Fn::Join": ["", [
+                  "echo ", {"Ref": "CCMachineName"}, ".", {"Ref": "DNSDomain"},
+                  " > /etc/hostname && cat /etc/hostname"
+                ]]}
+              },
+              "03_change_etc_hosts_file": {
+                "command": "echo \"127.0.0.1  $FQDN $CCMACHINENAME\" >> /etc/hosts",
+                "env": {
+                  "FQDN": {"Fn::Join": ["", [
+                    {"Ref": "CCMachineName"}, ".",
+                    {"Ref": "DNSDomain"}
+                  ]]},
+                  "CCMACHINENAME": {"Ref": "CCMachineName"}
+                }
+              },
+              "04_change_hostname_on_fly": {
+                "command": {"Fn::Join": ["", [
+                  "hostname", " ",
+                  {"Ref": "CCMachineName"}, ".",
+                  {"Ref": "DNSDomain"}
+                ]]}
+              }
+            }
+          },
+          "InstallControlCenter": {
+            "packages": {
+              "yum": {
+                "unzip": []
+              }
+            },
+            "files": {
+              "/tmp/changehearbeat.tsql": {
+                "content": {"Fn::Join": ["", [
+                  "USE ", {"Ref": "DatabaseName"}, "\n",
+                  "GO", "\n",
+                  "UPDATE comm_profile SET heart_beat_freq_time_unit='minutes', heart_beat_freq_time='", {"Ref": "HeartbeatIntervalInMinutes"},
+                  "' WHERE agent_type IN ('DESKTOP', 'FILE_SERVER', 'PORTAL');", "\n",
+                  "GO", "\n",
+                  "exit", "\n"
+                ]]},
+                "mode": "000644"
+              }
+            },
+            "commands": {
+              "01_download_build": {
+                "command": {"Fn::Join": ["", [
+                  "aws s3 cp ", {"Ref": "CCInstallerS3Url"}, " ", "/tmp/ControlCenter.zip"
+                ]]},
+                "env": {
+                  "AWS_ACCESS_KEY_ID": {"Ref": "S3AccessKeyID"},
+                  "AWS_SECRET_ACCESS_KEY": {"Ref": "S3SecretAccessKey"}
+                }
+              },
+              "02_download_license": {
+                "command": {"Fn::Join": ["", [
+                  "aws s3 cp ", {"Ref": "LicenseS3Url"}, " ", "/usr/local/license.dat"
+                ]]},
+                "env": {
+                  "AWS_ACCESS_KEY_ID": {"Ref": "S3AccessKeyID"},
+                  "AWS_SECRET_ACCESS_KEY": {"Ref": "S3SecretAccessKey"}
+                }
+              },
+              "03_unpack_installer": {
+                "command": "unzip -o -q /tmp/ControlCenter.zip -d /usr/local"
+              },
+              "04_fix_file_permissions": {
+                "command": "chmod +x /usr/local/PolicyServer/install.sh"
+              },
+              "05_change_cc_properties_file": {
+                "command": {"Fn::Join": ["", [
+                  "cat > /usr/local/PolicyServer/cc_properties.json <<EOF", "\n",
+                  "{", "\"installation_dir\": \"/opt/nextlabs\",",
+                  "\"installation_mode\": \"install\",",
+                  "\"console_install_mode\": \"SAAS\",",
+                  "\"web_service_port\": \"8443\",",
+                  "\"web_application_port\": \"443\",",
+                  "\"admin_user_password\": \"", {"Ref": "AdminPassword"}, "\",",
+                  "\"ssl_certificate_password\": \"", {"Ref": "SSLCertPassword"}, "\",",
+                  "\"key_store_password\": \"", {"Ref": "KeystorePassword"}, "\",",
+                  "\"dms_component\": \"ON\",",
+                  "\"dac_component\": \"ON\",",
+                  "\"dps_component\": \"ON\",",
+                  "\"dem_component\": \"ON\",",
+                  "\"ddac_component\": \"ON\",",
+                  "\"admin_component\": \"ON\",",
+                  "\"reporter_component\": \"ON\",",
+                  "\"dabs_component\": \"ON\",",
+                  "\"dkms_component\": \"ON\",",
+                  "\"cc_console_component\": \"ON\",",
+                  "\"installation_type\": \"complete\",",
+                  "\"ad_domain_name\": \"\",",
+                  "\"ad_domain_controller\": \"\",",
+                  "\"ad_domain_port\": null,",
+                  "\"ad_base_DN\": null,",
+                  "\"ad_username\": null,",
+                  "\"ad_password\": null,",
+                  "\"database_type\": \"MSSQL\",",
+                  "\"db_connection_url\": \"sqlserver://", {"Ref": "RDSInstanceEndpointAddress"}, ":1433;DatabaseName=", {"Ref": "DatabaseName"}, ";\",",
+                  "\"db_username\": \"", {"Ref": "DBUsername"}, "\",",
+                  "\"db_password\": \"", {"Ref": "DBPassword"}, "\",",
+                  "\"mail_server_url\": \"", {"Ref": "MailServerURL"}, "\",",
+                  "\"mail_server_port\": \"", {"Ref": "MailServerPort"}, "\",",
+                  "\"mail_server_username\": \"", {"Ref": "MailServerUsername"}, "\",",
+                  "\"mail_server_password\": \"", {"Ref": "MailServerPasssord"}, "\",",
+                  "\"mail_server_from\": \"", {"Ref": "MailServerFrom"}, "\",",
+                  "\"mail_server_to\": \"", {"Ref": "MailServerTo"}, "\",",
+                  "\"mail_server_ssl\": \"", {"Ref": "MailServerSSL"}, "\",",
+                  "\"skip_ad_check\": false,",
+                  "\"skip_smtp_check\": true,",
+                  "\"server\": {",
+                    "\"jvmms\": 2048,",
+                    "\"jvmmx\": ", {"Ref": "JvmMX"},
+                  "},",
+                  "\"license_file_location\": \"/usr/local/license.dat\"", "}", "\n",
+                  "EOF"
+                ]]}
+              },
+              "06_install_server": {
+                "command": "/usr/local/PolicyServer/install.sh -s"
+              },
+              "07_change_commonprofile_heartbeat_default": {
+                "command": {"Fn::Join": [" ", [
+                  "tsql",
+                  "-H", {"Ref": "RDSInstanceEndpointAddress"},
+                  "-p 1433",
+                  "-U $DBUSER",
+                  "-P $DBPASSWORD",
+                  "< /tmp/changehearbeat.tsql"
+                ]]},
+                "env": {
+                  "DBUSER": {"Ref": "DBMasterUsername"},
+                  "DBPASSWORD": {"Ref": "DBMasterUserPassword"}
+                }
+              },
+              "08_create_sysinfo_dat": {
+                "command": "/opt/nextlabs/PolicyServer/java/bin/java -jar /opt/nextlabs/PolicyServer/tools/crypt/crypt.jar -w $TO_ENCRYPT > /opt/nextlabs/PolicyServer/server/license/sys_info.dat",
+                "env": {"TO_ENCRYPT": "{\"license_info\":{\"expiry_date\":\"12/31/2017\",\"subcription_mode\":\"trial\"},\"pdp_info\":[{\"id\":1,\"host\":\"jpc1\",\"memory\":\"1024MB\",\"vcpu\":1}]}\"}"}
+              },
+              "09_download_sample_policy_file": {
+                "command": {"Fn::Join": ["", [
+                  "aws s3 cp s3://nxtlbsrelease/Platform_SAAS/sample_files/sample_policy.bin /opt/nextlabs/PolicyServer/server/resources/help/"
+                ]]},
+                "env": {
+                  "AWS_ACCESS_KEY_ID": {"Ref": "S3AccessKeyID"},
+                  "AWS_SECRET_ACCESS_KEY": {"Ref": "S3SecretAccessKey"}
+                }
+              },
+              "10_start_server": {
+                "command": "service CompliantEnterpriseServer start"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "ImageId": {"Fn::FindInMap": ["AWSRegionAmazAMI", {"Ref": "AWS::Region"}, "id"]},
+        "InstanceType": {"Ref": "CCInstanceType"},
+        "Tags": [{"Key": "Name", "Value": {"Fn::Join": [" ", [{"Ref": "AWS::StackName"}, "Control Center"]]}}],
+        "KeyName": {"Ref": "KeyPairName"},
+        "NetworkInterfaces": [{
+          "AssociatePublicIpAddress": true,
+          "DeleteOnTermination": true,
+          "DeviceIndex": "0",
+          "GroupSet": [{"Ref": "CCVPCSecurityGroupID"}],
+          "SubnetId": {"Ref": "EC2SubnetID"}
+        }],
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "VolumeType" : "gp2",
+              "DeleteOnTermination": true,
+              "VolumeSize": "100"
+            }
+          }
+        ],
+        "UserData": { "Fn::Base64" : { "Fn::Join" : ["", [
+          "#!/bin/bash -x\n",
+          "yum update -y aws-cfn-bootstrap\n",
+          "# Install the files and packages from the metadata\n",
+          "/opt/aws/bin/cfn-init -v ",
+          "         --stack ", { "Ref" : "AWS::StackName" },
+          "         --resource ControlCenterInstance ",
+          "         --configsets InstallAndRun ",
+          "         --region ", { "Ref" : "AWS::Region" }, "\n",
+          "# Signal the status from cfn-init\n",
+          "/opt/aws/bin/cfn-signal -e $? ",
+          "         --stack ", { "Ref" : "AWS::StackName" },
+          "         --resource ControlCenterInstance ",
+          "         --region ", { "Ref" : "AWS::Region" }, "\n"
+        ]]}}
+      }
+    }
+  },
+  "Outputs": {
+    "InstanceRef": {
+      "Description": "The EC2 instance's instance-ID",
+      "Value": {"Ref": "ControlCenterInstance"}
+    },
+    "PrivateIp": {
+      "Description": "The private IP of the instance",
+      "Value": {"Fn::GetAtt": ["ControlCenterInstance", "PrivateIp"]}
+    },
+    "DnsName": {
+      "Description": "The DnsName of the instance",
+      "Value": {"Fn::Join": ["", [
+        {"Ref": "CCMachineName"}, ".",
+        {"Ref": "DNSDomain"}
+      ]]}
+    }
+  }
+}

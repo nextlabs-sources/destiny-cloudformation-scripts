@@ -1,0 +1,219 @@
+{
+  "StackName": "duan-platform-with-icenets-stack-using-postgres",
+  "TemplateURL": "https://s3.amazonaws.com/cf-templates-nextlabs/platform/stable/stack.yaml",
+  "Parameters": [
+    {
+      "ParameterKey": "AdminPassword",
+      "ParameterValue": "123next!"
+    },
+    {
+      "ParameterKey": "APIUser",
+      "ParameterValue": "apiclient"
+    },
+    {
+      "ParameterKey": "APIUserPassword",
+      "ParameterValue": "123next!"
+    },
+    {
+      "ParameterKey": "CCInstallerS3Url",
+      "ParameterValue": "s3://nxtlbsrelease/Platform_SAAS/cc/ControlCenter-Linux-chef-SaaS-8.0.4.999-Main.zip"
+    },
+    {
+      "ParameterKey": "CCSamplePolicyS3Url",
+      "ParameterValue": "s3://nxtlbsrelease/Platform_SAAS/sample_files/sample_policy.bin"
+    },
+    {
+      "ParameterKey": "ControlCenterHostname",
+      "ParameterValue": "duan-postgres-dist-cc"
+    },
+    {
+      "ParameterKey": "ControlCenterInstanceType",
+      "ParameterValue": "t2.medium"
+    },
+    {
+      "ParameterKey": "ControlCenterJVMMX",
+      "ParameterValue": "3072"
+    },
+    {
+      "ParameterKey": "DBInstanceClass",
+      "ParameterValue": "db.m4.4xlarge"
+    },
+    {
+      "ParameterKey": "DBControlCenterName",
+      "ParameterValue": "ccdb"
+    },
+    {
+      "ParameterKey": "DBControlCenterPassword",
+      "ParameterValue": "123next!"
+    },
+    {
+      "ParameterKey": "DBControlCenterUsername",
+      "ParameterValue": "ccuser"
+    },
+    {
+      "ParameterKey": "DBMasterUserPassword",
+      "ParameterValue": "123next!"
+    },
+    {
+      "ParameterKey": "DBMasterUsername",
+      "ParameterValue": "nextlabs"
+    },
+    {
+      "ParameterKey": "DBMasterName",
+      "ParameterValue": "postgres"
+    },
+    {
+      "ParameterKey": "DBSubnetGroupName",
+      "ParameterValue": "platform-group"
+    },
+    {
+      "ParameterKey": "DNSDomain",
+      "ParameterValue": "platform.nextlabs.solutions"
+    },
+    {
+      "ParameterKey": "EC2SubnetIDs",
+      "ParameterValue": "subnet-884970ec,subnet-1b3f6f6d,subnet-0be87d53"
+    },
+    {
+      "ParameterKey": "HeartbeatIntervalInMinutes",
+      "ParameterValue": "1"
+    },
+    {
+      "ParameterKey": "ICENETDesiredCapacity",
+      "ParameterValue": "2"
+    },
+    {
+      "ParameterKey": "ICENETInstanceType",
+      "ParameterValue": "t2.large"
+    },
+    {
+      "ParameterKey": "ICENETJvmMX",
+      "ParameterValue": "6144"
+    },
+    {
+      "ParameterKey": "ICENETStorageType",
+      "ParameterValue": "io1"
+    },
+    {
+      "ParameterKey": "ICENETAllocatedStorage",
+      "ParameterValue": "100"
+    },
+    {
+      "ParameterKey": "ICENETIops",
+      "ParameterValue": "5000"
+    },
+    {
+      "ParameterKey": "JPCDesiredCapacity",
+      "ParameterValue": "2"
+    },
+    {
+      "ParameterKey": "JPCHostname",
+      "ParameterValue": "duan-postgres-dist-jpc"
+    },
+    {
+      "ParameterKey": "JPCInstallerS3Url",
+      "ParameterValue": "s3://nxtlbsrelease/Platform_SAAS/jpc/PolicyControllerJava-chef-8.0.4.999.zip"
+    },
+    {
+      "ParameterKey": "JavaPolicyControllerInstanceType",
+      "ParameterValue": "t2.medium"
+    },
+    {
+      "ParameterKey": "KeyPairName",
+      "ParameterValue": "sgdc-dev"
+    },
+    {
+      "ParameterKey": "KeystorePassword",
+      "ParameterValue": "123next!store"
+    },
+    {
+      "ParameterKey": "LicenseS3Url",
+      "ParameterValue": "s3://nxtlbsrelease/Platform_SAAS/license.dat"
+    },
+    {
+      "ParameterKey": "MailServerFrom",
+      "ParameterValue": ""
+    },
+    {
+      "ParameterKey": "MailServerTo",
+      "ParameterValue": ""
+    },
+    {
+      "ParameterKey": "MailServerPasssord",
+      "ParameterValue": ""
+    },
+    {
+      "ParameterKey": "MailServerPort",
+      "ParameterValue": "25"
+    },
+    {
+      "ParameterKey": "MailServerSSL",
+      "ParameterValue": "true"
+    },
+    {
+      "ParameterKey": "MailServerURL",
+      "ParameterValue": ""
+    },
+    {
+      "ParameterKey": "MailServerUsername",
+      "ParameterValue": ""
+    },
+    {
+      "ParameterKey": "Oauth2JWTSecretPluginS3Url",
+      "ParameterValue": "s3://nxtlbsrelease/Platform_SAAS/Oauth2JWTSecret_Plugin/Oauth2JWTSecret-Plugin.zip"
+    },
+    {
+      "ParameterKey": "RDSType",
+      "ParameterValue": "POSTGRES"
+    },
+    {
+      "ParameterKey": "RDSAllocatedStorage",
+      "ParameterValue": "1000"
+    },
+    {
+      "ParameterKey": "RDSStorageType",
+      "ParameterValue": "io1"
+    },
+    {
+      "ParameterKey": "RDSIops",
+      "ParameterValue": "10000"
+    },
+    {
+      "ParameterKey": "Route53PrivateHostedZone",
+      "ParameterValue": "Z2LHQ2FR6ZUOZF"
+    },
+    {
+      "ParameterKey": "Route53PublicHostedZone",
+      "ParameterValue": "ZFXRKRN93HS7L"
+    },
+    {
+      "ParameterKey": "SSLCertPassword",
+      "ParameterValue": "123next!ssl"
+    },
+    {
+      "ParameterKey": "SSLCertificateId",
+      "ParameterValue": "arn:aws:acm:us-west-2:579292207088:certificate/eeb5f654-a3b2-4de6-b78b-cbc93ad5db79"
+    },
+    {
+      "ParameterKey": "VpcId",
+      "ParameterValue": "vpc-78998f1c"
+    }
+  ],
+  "Capabilities": [
+    "CAPABILITY_IAM"
+  ],
+  "Tags": [
+    {
+      "Key": "Owner",
+      "Value": "Duan Shiqiang"
+    },
+    {
+      "Key": "Purpose",
+      "Value": "RandD-Engr"
+    },
+    {
+      "Key": "Project",
+      "Value": "Platform"
+    }
+  ]
+}

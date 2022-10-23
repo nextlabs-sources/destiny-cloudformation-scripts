@@ -1,0 +1,91 @@
+Description: RDS Template
+Parameters:
+  DBInstanceClass:
+    Default: db.m4.large
+    Description: The instance type, such as db.m4.large
+    Type: String
+  DBMasterUserPassword:
+    AllowedPattern: '[a-zA-Z0-9][a-zA-Z0-9#?!@$%^&*-]*'
+    ConstraintDescription: Must at least has 8 characters
+    Description: Password for RDS database access
+    MinLength: '8'
+    NoEcho: true
+    Type: String
+  DBMasterUsername:
+    AllowedPattern: '[a-zA-Z]*'
+    ConstraintDescription: Must at least has 2 characters and only letters are allowed
+    Description: Username for RDS database
+    MinLength: '2'
+    Type: String
+  DBMasterName:
+    Default: postgres
+    Description: The name of the database to create when the DB instance is created.
+      Default is postgres
+    Type: String
+  DBSubnetGroupName:
+    Description: SubnetGroup for RDS instance to be created in
+    Type: String
+  RDSAllocatedStorage:
+    Type: String
+    Description: The allocated storage size, specified in gigabytes (GB).
+    Default: '500'
+  RDSIops:
+    Type: Number
+    Description: >
+      The number of I/O operations per second (IOPS) that the database provisions.
+      The value must be equal to or greater than 1000.
+      Specify only if you use io1 StorageType, and refer to AWS doc for allowed value
+    MinValue: 1000
+    MaxValue: 30000
+    Default: 2000
+  RDSStorageType:
+    Description: The storage type associated with this DB instance.
+    Type: String
+    AllowedValues:
+    - 'standard'
+    - 'gp2'
+    - 'io1'
+    Default: 'gp2'
+  RDSEngine:
+    Type: String
+    Description: The RDS engine type
+    AllowedValues:
+    - 'oracle-se2'
+    - 'postgres'
+    Default: 'postgres'
+  RDSVPCSecurityGroupID:
+    Description: The VPC Security Group to apply to the RDS instance
+    Type: AWS::EC2::SecurityGroup::Id
+Conditions:
+  ProvisionedIOPS: !Equals [ !Ref RDSStorageType, 'io1' ]
+  LicenseModelRequired: !Equals [ !Ref RDSEngine, 'oracle-se2' ]
+Mappings:
+  RDSEngineVersion:
+    postgres:
+      id: '9.5.4'
+    oracle-se2:
+      id: '12.1.0.2.v6'
+Resources:
+  RDSInstance:
+    Properties:
+      AllocatedStorage: !Ref RDSAllocatedStorage
+      Iops:
+        !If [ProvisionedIOPS, !Ref RDSIops, !Ref "AWS::NoValue"]
+      DBInstanceClass: !Ref DBInstanceClass
+      DBName: !Ref DBMasterName
+      DBSubnetGroupName: !Ref DBSubnetGroupName
+      Engine: !Ref RDSEngine
+      EngineVersion: !FindInMap [RDSEngineVersion, !Ref RDSEngine, id]
+      LicenseModel:
+        !If [LicenseModelRequired, 'license-included', !Ref "AWS::NoValue"]
+      MasterUserPassword: !Ref DBMasterUserPassword
+      MasterUsername: !Ref DBMasterUsername
+      PubliclyAccessible: false
+      StorageType: !Ref RDSStorageType
+      VPCSecurityGroups:
+      - !Ref RDSVPCSecurityGroupID
+    Type: AWS::RDS::DBInstance
+Outputs:
+  EndpointAddress:
+    Description: The connection endpoint for the database.
+    Value: !GetAtt RDSInstance.Endpoint.Address

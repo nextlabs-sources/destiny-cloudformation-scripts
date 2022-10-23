@@ -1,0 +1,64 @@
+{
+  "StackName": "duan-platform-ICENET",
+  "TemplateURL": "https://s3.amazonaws.com/cf-templates-nextlabs/platform/stable/icenet.yaml",
+  "Parameters": [
+    {
+      "ParameterKey": "CCInstallerS3Url",
+      "ParameterValue": "s3://nxtlbsrelease/Platform_SAAS/cc/ControlCenter-Linux-chef-SaaS-8.0.4.999-Main.zip"
+    },
+    {
+      "ParameterKey": "ICENETInstanceType",
+      "ParameterValue": "m4.large"
+    },
+    {
+      "ParameterKey": "CCVPCSecurityGroupID",
+      "ParameterValue": "sg-7517b40c"
+    },
+    {
+      "ParameterKey": "EC2SubnetID",
+      "ParameterValue": "subnet-884970ec"
+    },
+    {
+      "ParameterKey": "KeyPairName",
+      "ParameterValue": "sgdc-dev"
+    },
+    {
+      "ParameterKey": "LicenseS3Url",
+      "ParameterValue": "s3://nxtlbsrelease/Platform_SAAS/license.dat"
+    },
+    {
+      "ParameterKey": "S3AccessKeyID",
+      "ParameterValue": "AKIAIHIMVFRHPGPZPFGQ"
+    },
+    {
+      "ParameterKey": "S3SecretAccessKey",
+      "ParameterValue": "/cmZ1lJNt7vQDd70NL2BqEM8L5EdVshYP5l+h8ey"
+    },
+    {
+      "ParameterKey": "SSLCertPassword",
+      "ParameterValue": "123next!"
+    },
+    {
+      "ParameterKey": "EFSFileSystem",
+      "ParameterValue": "fs-df9d5d76"
+    },
+    {
+      "ParameterKey": "CCHostname",
+      "ParameterValue": "duan-cc-us-west-2.platform.nextlabs.solutions"
+    }
+  ],
+  "Tags": [
+    {
+      "Key": "Owner",
+      "Value": "Duan Shiqiang"
+    },
+    {
+      "Key": "Purpose",
+      "Value": "RandD-Engr"
+    },
+    {
+      "Key": "Project",
+      "Value": "Platform"
+    }
+  ]
+}
